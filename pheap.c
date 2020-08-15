@@ -1,7 +1,6 @@
 #include <u.h>
 #include <libc.h>
-#include "heap.h"
-#include "fns.h"
+#include "asif.h"
 
 static Pairheap *
 mergequeue(Pairheap *a, Pairheap *b)
@@ -72,7 +71,7 @@ decreasekey(Pairheap *p, double Δ, Pairheap **queue)
 }
 
 void
-pushqueue(int n, void *aux, Pairheap **queue)
+pushqueue(double n, void *aux, Pairheap **queue)
 {
 	Pairheap *p;
 

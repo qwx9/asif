@@ -3,7 +3,7 @@
 #include "asif.h"
 
 void *
-erealloc(void *p, ulong n, ulong oldn)
+erealloc(void *p, ulong n)
 {
 	if((p = realloc(p, n)) == nil)
 		sysfatal("realloc: %r");

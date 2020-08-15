@@ -6,14 +6,14 @@ struct String{
 
 typedef struct VArray VArray;
 struct VArray{
-	int nelem;
+	int n;
 	int elsize;
 	int vsize;
 	int bufsize;
 	void *p;
 };
 void	vfree(VArray*);
-VArray*	vinsert(VArray*, char*);
+void	vinsert(VArray*, char*);
 VArray*	valloc(ulong, int);
 
 VArray*	naivestrfind(String, String);
@@ -31,7 +31,7 @@ Pairheap*	popqueue(Pairheap**);
 void	decreasekey(Pairheap*, double, Pairheap**);
 void	pushqueue(double, void*, Pairheap**);
 
-void*	erealloc(void*, ulong, ulong);
+void*	erealloc(void*, ulong);
 void*	emalloc(ulong);
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))

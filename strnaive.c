@@ -2,18 +2,19 @@
 #include <libc.h>
 #include "asif.h"
 
+/* naive exact string search of a word within a text */
 VArray *
-naivestrfind(String text, String word)
+naivestrfind(String S, String W)
 {
-	int n;
+	int i, n;
 	VArray *v;
 
-	n = text.n - word.n + 1;
+	n = S.n - W.n + 1;
 	if(n <= 0)
 		return nil;
-	v = valloc(n, sizeof int);
+	v = valloc(n, sizeof(int));
 	for(i=0; i<n; i++)
-		if(strcmp(text.s+i, word.s) == 0)
-			v = vinsert(v, &i);
+		if(strcmp(S.s+i, W.s) == 0)
+			v = vinsert(v, (void*)&i);
 	return v;
 }
