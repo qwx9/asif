@@ -17,6 +17,7 @@ void	vinsert(VArray*, char*);
 VArray*	valloc(ulong, int);
 
 VArray*	naivestrfind(String, String);
+VArray*	kmpstrfind(String, String);
 
 typedef struct Pairheap Pairheap;
 struct Pairheap{

@@ -5,7 +5,7 @@
 /* ordinary knuth-morris-pratt exact string search of a word W within a text S
  * with W preprocessing */
 
-int *
+static int *
 jumptab(String W)
 {
 	int i, j, *T;
