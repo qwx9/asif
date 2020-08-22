@@ -2,11 +2,28 @@
 #include <libc.h>
 #include "asif.h"
 
+/* morris-pratt exact string search of a word W within a text S with W preprocessing */
+
+static int *
+mpjumptab(String W)
+{
+	int i, j, *T;
+
+	T = emalloc(W.n + 1);
+	T[0] = -1;
+	for(i=-1, j=0; j<W.n;){
+		while(i > -1 && W.s[i] != W.s[j])
+			i = T[i];
+		T[++j] = ++i;
+	}
+	return T;
+}
+
 /* ordinary knuth-morris-pratt exact string search of a word W within a text S
  * with W preprocessing */
 
 static int *
-jumptab(String W)
+kmpjumptab(String W)
 {
 	int i, j, *T;
 
@@ -25,8 +42,8 @@ jumptab(String W)
 	return T;
 }
 
-VArray *
-kmpstrfind(String S, String W)
+static VArray *
+search(String S, String W, int*(*tabfn)(String))
 {
 	int n, i, j, *T;
 	VArray *v;
@@ -34,7 +51,7 @@ kmpstrfind(String S, String W)
 	if(S.n < W.n)
 		return nil;
 	v = valloc(n, sizeof(int));
-	T = jumptab(W);
+	T = tabfn(W);
 	for(i=j=0; j<W.n;){
 		while(i > -1 && W.s[i] != S.s[j])
 			i = T[i];
@@ -47,4 +64,16 @@ kmpstrfind(String S, String W)
 	}
 	free(T);
 	return v;
+}
+
+VArray *
+morrispratt(String S, String W)
+{
+	return search(S, W, mpjumptab);
+}
+
+VArray *
+knuthmorrispratt(String S, String W)
+{
+	return search(S, W, kmpjumptab);
 }
