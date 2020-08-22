@@ -48,7 +48,8 @@ search(String S, String W, int*(*tabfn)(String))
 	int n, i, j, *T;
 	VArray *v;
 
-	if(S.n < W.n)
+	n = S.n - W.n + 1;
+	if(n <= 0)
 		return nil;
 	v = valloc(n, sizeof(int));
 	T = tabfn(W);
