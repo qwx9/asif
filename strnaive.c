@@ -15,6 +15,6 @@ naivestrfind(String S, String W)
 	v = valloc(n, sizeof(int));
 	for(i=0; i<n; i++)
 		if(strcmp(S.s+i, W.s) == 0)
-			v = vinsert(v, (void*)&i);
+			vinsert(v, (void*)&i);
 	return v;
 }
