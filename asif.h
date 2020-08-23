@@ -16,9 +16,13 @@ void	vfree(VArray*);
 void	vinsert(VArray*, char*);
 VArray*	valloc(ulong, int);
 
+int	modpow(int, int, int);
+
 VArray*	naivestrfind(String, String);
 VArray*	morrispratt(String, String);
 VArray*	knuthmorrispratt(String, String);
+VArray*	rabinkarp(String, String, int, int);
+VArray*	rabinkarp8(String, String);
 
 typedef struct Pairheap Pairheap;
 struct Pairheap{
