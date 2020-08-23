@@ -16,6 +16,9 @@ void	vfree(VArray*);
 void	vinsert(VArray*, char*);
 VArray*	valloc(ulong, int);
 
+int	lsb64(uvlong);
+int	msb64(uvlong);
+
 int	modpow(int, int, int);
 
 VArray*	naivestrfind(String, String);
