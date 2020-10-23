@@ -16,6 +16,7 @@ void	vfree(VArray*);
 void	vinsert(VArray*, char*);
 VArray*	valloc(ulong, int);
 
+u32int	next32pow2(u32int);
 int	lsb64(uvlong);
 int	msb64(uvlong);
 

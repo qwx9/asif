@@ -2,6 +2,19 @@
 #include <libc.h>
 #include "asif.h"
 
+/* 32bit round up to next power of 2 */
+u32int
+next32pow2(u32int v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	return v + 1;
+}
+
 /* find least significant set bit in 64bit integers */
 int
 lsb64(uvlong v)
