@@ -41,6 +41,9 @@ Pairheap*	popqueue(Pairheap**);
 void	decreasekey(Pairheap*, double, Pairheap**);
 void	pushqueue(double, void*, Pairheap**);
 
+void	four1(double*, int, int);
+void	realft(double*, int, int);
+
 void*	erealloc(void*, ulong);
 void*	emalloc(ulong);
 
