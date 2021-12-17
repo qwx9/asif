@@ -9,6 +9,8 @@ enum{
 void
 vfree(VArray *v)
 {
+	if(v == nil)
+		return;
 	free(v->p);
 	free(v);
 }
@@ -18,10 +20,11 @@ vinsert(VArray *v, char *u)
 {
 	int off;
 
+	assert(v != nil && u != nil);
 	off = v->n * v->elsize;
 	if(v->n++ >= v->bufsize){
+		v->p = erealloc(v->p, v->bufsize * 2, v->bufsize);
 		v->bufsize *= 2;
-		v->p = erealloc(v->p, v->bufsize);
 		v->vsize *= 2;
 	}
 	memcpy((char*)v->p+off, u, v->elsize);

@@ -44,8 +44,9 @@ void	pushqueue(double, void*, Pairheap**);
 void	four1(double*, int, int);
 void	realft(double*, int, int);
 
-void*	erealloc(void*, ulong);
+char*	estrdup(char*);
+void*	erealloc(void*, ulong, ulong);
 void*	emalloc(ulong);
 
-#define MIN(a,b)	((a) < (b) ? (a) : (b))
-#define MAX(a,b)	((a) > (b) ? (a) : (b))
+#define MIN(a,b)	((a) <= (b) ? (a) : (b))
+#define MAX(a,b)	((a) >= (b) ? (a) : (b))
