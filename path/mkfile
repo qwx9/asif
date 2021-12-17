@@ -1,0 +1,24 @@
+</$objtype/mkfile
+BIN=$home/bin/$objtype/path
+TARG=\
+	dijkstra\
+
+HFILES=../asif.h dat.h fns.h
+OFILES=\
+	../emalloc.$O\
+	client.$O\
+	drw.$O\
+	fs.$O\
+	grid.$O\
+	map.$O\
+
+</sys/src/cmd/mkmany
+
+$O.dijkstra: $OFILES dijkstra.$O ../pheap.$O
+
+dicks:V:
+	mkdir -p $BIN
+install:V:	dicks
+%.$O:	%.c
+	$CC -o $target $CFLAGS $stem.c
+CLEANFILES=`{echo ../*.[$OS]}
