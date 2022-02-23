@@ -16,6 +16,22 @@ void	vfree(VArray*);
 void	vinsert(VArray*, char*);
 VArray*	valloc(ulong, int);
 
+typedef struct Vector Vector;
+struct Vector{
+	void *p;
+	ulong n;
+	ulong elsz;
+	ulong bufsz;
+	ulong totsz;
+	int firstempty;
+};
+void	freevec(Vector*);
+void	clearvec(Vector*);
+void	popsparsevec(Vector*, int);
+void*	pushsparsevec(Vector*, void*);
+void*	pushvec(Vector*, void*);
+void*	newvec(Vector*, int, int);
+
 u32int	next32pow2(u32int);
 int	lsb64(uvlong);
 int	msb64(uvlong);
