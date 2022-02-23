@@ -32,6 +32,20 @@ void*	pushsparsevec(Vector*, void*);
 void*	pushvec(Vector*, void*);
 void*	newvec(Vector*, int, int);
 
+typedef struct QNode QNode;
+struct QNode{
+	QNode *left;
+	QNode *right;
+	QNode *up;
+	QNode *down;
+	void *aux;
+
+	QNode *prev;
+	QNode *next;
+};
+QNode*	qtmerge(QNode*);
+QNode*	qtsplit(QNode*);
+
 u32int	next32pow2(u32int);
 int	lsb64(uvlong);
 int	msb64(uvlong);
