@@ -70,7 +70,7 @@ decreasekey(Pairheap *p, double Δ, Pairheap **queue)
 	}
 }
 
-void
+Pairheap *
 pushqueue(double n, void *aux, Pairheap **queue)
 {
 	Pairheap *p;
@@ -79,4 +79,5 @@ pushqueue(double n, void *aux, Pairheap **queue)
 	p->n = n;
 	p->aux = aux;
 	*queue = mergequeue(p, *queue);
+	return p;
 }

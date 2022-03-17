@@ -69,7 +69,7 @@ struct Pairheap{
 void	nukequeue(Pairheap**);
 Pairheap*	popqueue(Pairheap**);
 void	decreasekey(Pairheap*, double, Pairheap**);
-void	pushqueue(double, void*, Pairheap**);
+Pairheap*	pushqueue(double, void*, Pairheap**);
 
 void	four1(double*, int, int);
 void	realft(double*, int, int);
@@ -80,3 +80,5 @@ void*	emalloc(ulong);
 
 #define MIN(a,b)	((a) <= (b) ? (a) : (b))
 #define MAX(a,b)	((a) >= (b) ? (a) : (b))
+
+#define SQRT2 1.4142135623730951
