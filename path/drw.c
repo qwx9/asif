@@ -16,8 +16,13 @@ enum{
 enum{
 	Cbg,
 	Cgrid,
+	Cfree,
+	Cblocked,
 	Copen,
 	Cclosed,
+	Cpath,
+	Cstart,
+	Cgoal,
 	Cend,
 };
 static Image *col[Cend];
@@ -64,15 +69,15 @@ drawhud(void)
 	Node *n;
 
 	draw(screen, hudr, col[Cbg], nil, ZP);
-	sp = seprint(s, s+sizeof s, "map size: %R", viewr);
+	sp = seprint(s, s+sizeof s, "map size: %d,%d", viewr.max.x-1, viewr.max.y-1);
 	if((n = selected) != nil){
 		assert(n >= map && n < map + mapwidth * mapheight);
-		sp = seprint(sp, s+sizeof s, " selected: %P: %s",
+		sp = seprint(sp, s+sizeof s, " selected: %P%s",
 			Pt((n-map) % mapwidth, (n-map) / mapwidth),
-			n->blocked ? "blocked" : "");
+			n->blocked ? ": blocked" : "");
 	}
 	USED(sp);
-	string(screen, addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ)), col[Copen], ZP, font, s);
+	string(screen, addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ)), col[Cfree], ZP, font, s);
 }
 
 static void
@@ -81,7 +86,7 @@ drawmap(void)
 	Rectangle r;
 	Node *n;
 
-	draw(view, view->r, col[Copen], nil, ZP);
+	draw(view, view->r, col[Cfree], nil, ZP);
 	r = viewr;
 	while(r.min.x < viewr.max.x){
 		r.max.x = r.min.x;
@@ -99,7 +104,7 @@ drawmap(void)
 			r.min.x = (n - map) % mapwidth * Nodesz + 1;
 			r.min.y = (n - map) / mapwidth * Nodesz + 1;
 			r.max = addpt(r.min, Pt(Nodesz-1, Nodesz-1));
-			draw(view, r, col[Cclosed], nil, ZP);
+			draw(view, r, col[Cblocked], nil, ZP);
 		}
 }
 
@@ -139,7 +144,12 @@ initdrw(void)
 		sysfatal("initdraw: %r");
 	col[Cbg] = display->black;
 	col[Cgrid] = eallocimage(Rect(0,0,1,1), 1, 0x222222ff);
-	col[Copen] = eallocimage(Rect(0,0,1,1), 1, 0x777777ff);
-	col[Cclosed] = display->black;
+	col[Cblocked] = display->black;
+	col[Cfree] = eallocimage(Rect(0,0,1,1), 1, 0x777777ff);
+	col[Copen] = eallocimage(Rect(0,0,1,1), 1, 0x00ccccff);
+	col[Cclosed] = eallocimage(Rect(0,0,1,1), 1, 0x0000ccff);
+	col[Cpath] = eallocimage(Rect(0,0,1,1), 1, 0x777777ff);
+	col[Cstart] = eallocimage(Rect(0,0,1,1), 1, 0x00cc00ff);
+	col[Cgoal] = eallocimage(Rect(0,0,1,1), 1, 0xcc0000ff);
 	resetdrw();
 }
