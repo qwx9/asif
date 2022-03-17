@@ -23,7 +23,7 @@ evloop(void)
 {
 	Rune r;
 	Mouse m;
-	Node *n;
+	Node *n, *p;
 
 	enum{
 		Aresize,
@@ -37,6 +37,7 @@ evloop(void)
 		[Akbd] {kc->c, &r, CHANRCV},
 		[Aend] {nil, nil, CHANEND},
 	};
+	p = nil;
 	for(;;){
 		switch(alt(a)){
 		case Aresize:
@@ -45,14 +46,12 @@ evloop(void)
 			resetdrw();
 			break;
 		case Amouse:
-			m = mc->Mouse;
-			if(m.buttons == 0)
+			if(mc->buttons == 0)
 				break;
-			if((n = scrselect(m.xy)) != nil){
-				if(m.buttons & 4)
-					n->blocked ^= 1;
-				mouseinput(n, m);
-			}
+			if((n = scrselect(m.xy)) != nil
+			&& mc->buttons != m.buttons && p != n)
+				mouseinput(n, mc->Mouse);
+			p = n;
 			updatedrw();
 			break;
 		case Akbd:
@@ -62,6 +61,7 @@ evloop(void)
 			keyinput(r);
 			break;
 		}
+		m = mc->Mouse;
 	}
 }
 
@@ -99,7 +99,6 @@ init(int argc, char **argv)
 	fmtinstall('R', Rfmt);
 	initfs();
 	initmap();
-	initgrid();
 	initdrw();
 	if((kc = initkeyboard(nil)) == nil)
 		sysfatal("initkeyboard: %r");
