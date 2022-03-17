@@ -2,6 +2,7 @@
 BIN=$home/bin/$objtype/path
 TARG=\
 	dijkstra\
+	a∗\
 
 HFILES=../asif.h dat.h fns.h
 OFILES=\
@@ -9,12 +10,12 @@ OFILES=\
 	client.$O\
 	drw.$O\
 	fs.$O\
-	grid.$O\
 	map.$O\
 
 </sys/src/cmd/mkmany
 
 $O.dijkstra: $OFILES dijkstra.$O ../pheap.$O
+$O.a∗: $OFILES a∗.$O ../pheap.$O
 
 dicks:V:
 	mkdir -p $BIN

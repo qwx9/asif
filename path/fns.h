@@ -1,7 +1,12 @@
 void	init(int, char**);
 void	evloop(void);
 void	initfs(void);
+void	resetmap(void);
 void	initmap(void);
-void	initgrid(void);
 void	initdrw(void);
 void	resetdrw(void);
+double	eucdist(Node*, Node*);
+double	octdist(Node*, Node*);
+Vertex	n2p(Node*);
+Node*	p2n(Vertex);
+int	isblocked(Node*);
