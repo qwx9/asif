@@ -8,6 +8,7 @@ void	initdrw(void);
 void	resetdrw(void);
 double	eucdist(Node*, Node*);
 double	octdist(Node*, Node*);
+double	manhdist(Node*, Node*);
 Vertex	n2p(Node*);
 Node*	p2n(Vertex);
 int	isblocked(Node*);

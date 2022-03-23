@@ -21,7 +21,7 @@ backtrack(void)
 }
 
 static Node **
-successors(Node *n)
+successors8(Node *n)
 {
 	static Node *suc[8+1];
 	static dtab[2*(nelem(suc)-1)]={
@@ -50,6 +50,34 @@ successors(Node *n)
 	return suc;
 }
 
+static Node **
+successors4(Node *n)
+{
+	static Node *suc[4+1];
+	static dtab[2*(nelem(suc)-1)]={
+		0,-1, -1,0, 1,0, 0,1,
+	};
+	int i;
+	Node *s, **np;
+	Point p;
+	Rectangle r;
+
+	memset(suc, 0, sizeof suc);
+	p = n2p(n);
+	r = Rect(0, 0, mapwidth, mapheight);
+	for(i=0, np=suc; i<nelem(dtab); i+=2){
+		if(!ptinrect(addpt(p, Pt(dtab[i], dtab[i+1])), r))
+			continue;
+		s = n + dtab[i+1] * mapwidth + dtab[i];
+		assert(s >= map && s < map + mapwidth * mapheight);
+		if(isblocked(s))
+			continue;
+		s->Δg = 1;
+		*np++ = s;
+	}
+	return suc;
+}
+
 static Node *
 dijkstra(Node *a, Node *b)
 {
@@ -68,7 +96,7 @@ dijkstra(Node *a, Node *b)
 		if(x == b)
 			break;
 		x->closed = 1;
-		if((sl = successors(x)) == nil)
+		if((sl = successors8(x)) == nil)
 			sysfatal("a∗: %r");
 		for(s=*sl++; s!=nil; s=*sl++){
 			if(s->closed)

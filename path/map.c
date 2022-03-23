@@ -45,6 +45,19 @@ octdist(Node *a, Node *b)
 	return 1 * (dx + dy) + MIN(dx, dy) * (SQRT2 - 2 * 1);
 }
 
+double
+manhdist(Node *a, Node *b)
+{
+	int dx, dy;
+	Vertex p, q;
+
+	p = n2p(a);
+	q = n2p(b);
+	dx = abs(p.x - q.x);
+	dy = abs(p.y - q.y);
+	return dx + dy;
+}
+
 int
 isblocked(Node *n)
 {
