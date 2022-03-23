@@ -67,6 +67,21 @@ pushsparsevec(Vector *v, void *e)
 }
 
 void *
+popvec(Vector *v)
+{
+	uchar *p;
+
+	assert(v != nil && v->elsz > 0);
+	if(v->n <= 0)
+		return nil;
+	p = (uchar *)v->p + v->elsz * (v->n - 1);
+	if(v->firstempty > v->n - 1)
+		v->firstempty = v->n - 1;
+	v->n--;
+	return p;
+}
+
+void *
 pushvec(Vector *v, void *e)
 {
 	uchar *p;
@@ -76,6 +91,8 @@ pushvec(Vector *v, void *e)
 	memcpy(p, e, v->elsz);
 	v->n++;
 	v->firstempty = v->n;
+	if(v->firstempty > v->n)
+		v->firstempty = v->n;
 	return p;
 }
 

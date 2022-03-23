@@ -29,6 +29,7 @@ void	freevec(Vector*);
 void	clearvec(Vector*);
 void	popsparsevec(Vector*, int);
 void*	pushsparsevec(Vector*, void*);
+void*	popvec(Vector*);
 void*	pushvec(Vector*, void*);
 void*	newvec(Vector*, int, int);
 
