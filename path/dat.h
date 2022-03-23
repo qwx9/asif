@@ -11,6 +11,7 @@ struct PNode{
 	int closed;
 	double g;
 	double h;
+	double Δg;
 	Node *to;
 	Node *from;
 	Pairheap *pq;
