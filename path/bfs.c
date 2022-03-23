@@ -81,45 +81,32 @@ successors4(Node *n)
 }
 
 static Node *
-dijkstra(Node *a, Node *b)
+bfs(Node *a, Node *b)
 {
-	double g, Δg;
+	Vector v;
 	Node *x, *s, **sl;
-	Pairheap *queue, *pn;
 
 	assert(a != nil && b != nil);
 	assert(a != b);
-	queue = nil;
 	x = a;
-	a->pq = pushqueue(0, a, &queue);
-	while((pn = popqueue(&queue)) != nil){
-		x = pn->aux;
-		free(pn);
+	newvec(&v, manhdist(a, b), sizeof a);
+	pushvec(&v, a);
+	while(v.n > 0){
+		x = popvec(&v);
 		if(x == b)
 			break;
 		x->closed = 1;
 		if((sl = successorfn(x)) == nil)
-			sysfatal("dijkstra: %r");
+			sysfatal("bfs: %r");
 		for(s=*sl++; s!=nil; s=*sl++){
-			if(s->closed)
+			if(s->closed || s->open)
 				continue;
-			assert(!isblocked(s));
-			g = x->g + s->Δg;
-			Δg = s->g - g;
-			if(!s->open){
-				s->from = x;
-				s->open = 1;
-				s->g = g;
-				s->pq = pushqueue(s->g, s, &queue);
-			}else if(Δg > 0){
-				s->from = x;
-				s->g -= Δg;
-				decreasekey(s->pq, Δg, &queue);
-				assert(s->g >= 0);
-			}
+			s->from = x;
+			pushvec(&v, s);
+			s->open = 1;
 		}
 	}
-	nukequeue(&queue);
+	freevec(&v);
 	return x;
 }
 
@@ -129,7 +116,7 @@ findpath(void)
 	if(start == nil || goal == nil)
 		return -1;
 	resetmap();
-	if(dijkstra(start, goal) != goal)
+	if(bfs(start, goal) != goal)
 		return -1;
 	backtrack();
 	return 0;
