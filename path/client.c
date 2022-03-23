@@ -56,6 +56,7 @@ evloop(void)
 		case Akbd:
 			switch(r){
 			case Kdel: threadexitsall(nil);
+			case 'r': clearmap(); updatedrw(); break;
 			}
 			keyinput(r);
 			break;

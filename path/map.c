@@ -61,6 +61,15 @@ resetmap(void)
 }
 
 void
+clearmap(void)
+{
+	Node *n;
+
+	for(n=map; n<map+mapwidth*mapheight; n++)
+		memset(n, 0, sizeof *n);
+}
+
+void
 initmap(void)
 {
 	map = emalloc(mapwidth * mapheight * sizeof *map);
