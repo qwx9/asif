@@ -22,3 +22,4 @@ struct Node{
 extern Node *map;
 extern int mapwidth, mapheight;
 extern Node *selected;
+extern Node *start, *goal;

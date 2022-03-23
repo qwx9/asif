@@ -31,12 +31,17 @@ successors(Node *n)
 	};
 	int i;
 	Node *s, **np;
+	Point p;
+	Rectangle r;
 
 	memset(suc, 0, sizeof suc);
+	p = n2p(n);
+	r = Rect(0, 0, mapwidth, mapheight);
 	for(i=0, np=suc; i<nelem(dtab); i+=2){
-		s = n + dtab[i+1] * mapwidth + dtab[i];
-		if(s < map || s >= map + mapwidth * mapheight)
+		if(!ptinrect(addpt(p, Pt(dtab[i], dtab[i+1])), r))
 			continue;
+		s = n + dtab[i+1] * mapwidth + dtab[i];
+		assert(s >= map && s < map + mapwidth * mapheight);
 		if(isblocked(s))
 			continue;
 		*np++ = s;
@@ -67,16 +72,15 @@ a∗(Node *a, Node *b)
 		for(s=*sl++; s!=nil; s=*sl++){
 			if(s->closed)
 				continue;
-			if(isblocked(s))
-				continue;
-			g = x->g + 1;	// recheck if always 1 or sqrt2
+			assert(!isblocked(s));
+			g = x->g + 1;
 			Δg = s->g - g;
 			if(!s->open){
 				s->from = x;
 				s->open = 1;
 				s->h = octdist(s, b);
 				s->g = g;
-				pushqueue(s->g, s, &queue);
+				s->pq = pushqueue(s->g + s->h, s, &queue);
 			}else if(Δg > 0){
 				s->from = x;
 				s->g -= Δg;
@@ -105,8 +109,8 @@ int
 mouseinput(Node *n, Mouse m)
 {
 	switch(m.buttons & 7){
-	case 1: goal = n; return findpath();
-	case 2: start = n; return findpath();
+	case 1: if(start != n) goal = n; return findpath();
+	case 2: if(goal != n) start = n; return findpath();
 	case 4: n->blocked ^= 1; break;
 	}
 	return 0;
