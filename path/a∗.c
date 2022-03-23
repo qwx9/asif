@@ -10,6 +10,9 @@
 
 Node *start, *goal;
 
+static double	(*distfn)(Node*, Node*);
+static Node**	(*successorfn)(Node*);
+
 static void
 backtrack(void)
 {
@@ -89,14 +92,14 @@ a∗(Node *a, Node *b)
 	assert(a != b);
 	queue = nil;
 	x = a;
-	a->pq = pushqueue(octdist(a, b), a, &queue);
+	a->pq = pushqueue(distfn(a, b), a, &queue);
 	while((pn = popqueue(&queue)) != nil){
 		x = pn->aux;
 		free(pn);
 		if(x == b)
 			break;
 		x->closed = 1;
-		if((sl = successors8(x)) == nil)
+		if((sl = successorfn(x)) == nil)
 			sysfatal("a∗: %r");
 		for(s=*sl++; s!=nil; s=*sl++){
 			if(s->closed)
@@ -107,7 +110,7 @@ a∗(Node *a, Node *b)
 			if(!s->open){
 				s->from = x;
 				s->open = 1;
-				s->h = octdist(s, b);
+				s->h = distfn(s, b);
 				s->g = g;
 				s->pq = pushqueue(s->g + s->h, s, &queue);
 			}else if(Δg > 0){
@@ -155,5 +158,12 @@ void
 threadmain(int argc, char **argv)
 {
 	init(argc, argv);
+	if(fourdir){
+		distfn = manhdist;
+		successorfn = successors4;
+	}else{
+		distfn = octdist;
+		successorfn = successors8;
+	}
 	evloop();
 }

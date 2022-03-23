@@ -24,3 +24,4 @@ extern Node *map;
 extern int mapwidth, mapheight;
 extern Node *selected;
 extern Node *start, *goal;
+extern int fourdir;

@@ -10,6 +10,8 @@
 
 Node *start, *goal;
 
+static Node**	(*successorfn)(Node*);
+
 static void
 backtrack(void)
 {
@@ -96,7 +98,7 @@ dijkstra(Node *a, Node *b)
 		if(x == b)
 			break;
 		x->closed = 1;
-		if((sl = successors8(x)) == nil)
+		if((sl = successorfn(x)) == nil)
 			sysfatal("a∗: %r");
 		for(s=*sl++; s!=nil; s=*sl++){
 			if(s->closed)
@@ -154,5 +156,9 @@ void
 threadmain(int argc, char **argv)
 {
 	init(argc, argv);
+	if(fourdir)
+		successorfn = successors4;
+	else
+		successorfn = successors8;
 	evloop();
 }

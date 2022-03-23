@@ -6,6 +6,7 @@
 
 Node *map;
 int mapwidth, mapheight;
+int fourdir;
 
 Vertex
 n2p(Node *n)

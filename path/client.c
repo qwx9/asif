@@ -68,7 +68,7 @@ evloop(void)
 static void
 usage(void)
 {
-	fprint(2, "usage: %s [-s width[,height]]\n", argv0);
+	fprint(2, "usage: %s [-4] [-s width[,height]]\n", argv0);
 	threadexits("usage");
 }
 
@@ -80,6 +80,9 @@ init(int argc, char **argv)
 	mapwidth = 64;
 	mapheight = 64;
 	ARGBEGIN{
+	case '4':
+		fourdir = 1;
+		break;
 	case 's':
 		mapwidth = strtol(EARGF(usage()), &s, 0);
 		if(mapwidth <= 0)
