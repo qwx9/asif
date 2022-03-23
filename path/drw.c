@@ -85,6 +85,7 @@ drawmap(void)
 {
 	Rectangle r;
 	Node *n;
+	Image *c;
 
 	draw(view, view->r, col[Cfree], nil, ZP);
 	r = viewr;
@@ -99,13 +100,26 @@ drawmap(void)
 		line(view, r.min, r.max, 0, 0, 0, col[Cgrid], ZP);
 		r.min.y += Nodesz;
 	}
-	for(n=map; n<map+mapwidth*mapheight; n++)
-		if(n->blocked){
-			r.min.x = (n - map) % mapwidth * Nodesz + 1;
-			r.min.y = (n - map) / mapwidth * Nodesz + 1;
-			r.max = addpt(r.min, Pt(Nodesz-1, Nodesz-1));
-			draw(view, r, col[Cblocked], nil, ZP);
-		}
+	for(n=map; n<map+mapwidth*mapheight; n++){
+		r.min.x = (n - map) % mapwidth * Nodesz + 1;
+		r.min.y = (n - map) / mapwidth * Nodesz + 1;
+		r.max = addpt(r.min, Pt(Nodesz-1, Nodesz-1));
+		if(n->blocked)
+			c = col[Cblocked];
+		else if(n == start)
+			c = col[Cstart];
+		else if(n == goal)
+			c = col[Cgoal];
+		else if(n->to != nil)
+			c = col[Cpath];
+		else if(n->closed)
+			c = col[Cclosed];
+		else if(n->open)
+			c = col[Copen];
+		else
+			continue;
+		draw(view, r, c, nil, ZP);
+	}
 }
 
 static void
@@ -148,7 +162,7 @@ initdrw(void)
 	col[Cfree] = eallocimage(Rect(0,0,1,1), 1, 0x777777ff);
 	col[Copen] = eallocimage(Rect(0,0,1,1), 1, 0x00ccccff);
 	col[Cclosed] = eallocimage(Rect(0,0,1,1), 1, 0x0000ccff);
-	col[Cpath] = eallocimage(Rect(0,0,1,1), 1, 0x777777ff);
+	col[Cpath] = eallocimage(Rect(0,0,1,1), 1, 0xcccc00ff);
 	col[Cstart] = eallocimage(Rect(0,0,1,1), 1, 0x00cc00ff);
 	col[Cgoal] = eallocimage(Rect(0,0,1,1), 1, 0xcc0000ff);
 	resetdrw();
