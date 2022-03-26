@@ -48,8 +48,10 @@ evloop(void)
 		case Amouse:
 			if(mc->buttons == 0)
 				break;
-			if((n = scrselect(m.xy)) != nil && p != n)
-				mouseinput(n, mc->Mouse);
+			if((n = scrselect(m.xy)) != nil && p != n){
+				if(mouseinput(n, mc->Mouse) < 0)
+					fprint(2, "%r\n");
+			}
 			p = n;
 			updatedrw();
 			break;
