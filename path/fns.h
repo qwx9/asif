@@ -11,4 +11,5 @@ double	octdist(Node*, Node*);
 double	manhdist(Node*, Node*);
 Vertex	n2p(Node*);
 Node*	p2n(Vertex);
+Vertex	n2s(Node*);
 int	isblocked(Node*);

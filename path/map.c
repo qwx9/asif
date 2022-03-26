@@ -20,6 +20,17 @@ p2n(Vertex p)
 	return map + p.y * mapwidth + p.x;
 }
 
+Vertex
+n2s(Node *n)
+{
+	Vertex v;
+
+	v = n2p(n);
+	v.x = v.x * Nodesz + 1;
+	v.y = v.y * Nodesz + 1;
+	return v;
+}
+
 double
 eucdist(Node *a, Node *b)
 {
