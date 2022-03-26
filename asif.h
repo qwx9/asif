@@ -16,22 +16,30 @@ void	vfree(VArray*);
 void	vinsert(VArray*, char*);
 VArray*	valloc(ulong, int);
 
-typedef struct Vector Vector;
-struct Vector{
-	void *p;
-	ulong n;
-	ulong elsz;
-	ulong bufsz;
-	ulong totsz;
-	int firstempty;
+enum{
+	Shardsz = 128,
 };
-void	freevec(Vector*);
-void	clearvec(Vector*);
-void	popsparsevec(Vector*, int);
-void*	pushsparsevec(Vector*, void*);
-void*	popvec(Vector*);
-void*	pushvec(Vector*, void*);
-void*	newvec(Vector*, int, int);
+typedef struct VShard VShard;
+typedef struct Vector Vector;
+struct VShard{
+	void *p;
+	void *head;
+	int len;
+	VShard *prev;
+	VShard *next;
+};
+struct Vector{
+	int len;
+	int elsz;
+	VShard vl;
+	void *tmp;
+};
+void	vecfree(Vector*);
+void*	vechpop(Vector*);
+void*	vectpop(Vector*);
+void	vecpush(Vector*, void*);
+void*	vecget(Vector*, int);
+Vector*	vec(int);
 
 typedef struct QNode QNode;
 struct QNode{

@@ -2,108 +2,138 @@
 #include <libc.h>
 #include "asif.h"
 
-enum{
-	Nvecinc = 64,
-};
-
-void
-freevec(Vector *v)
+static void
+shardlink(Vector *v, VShard *s)
 {
-	if(v == nil)
-		return;
-	free(v->p);
+	s->next = &v->vl;
+	s->prev = v->vl.prev;
+	s->prev->next = s;
+	v->vl.prev = s;
+}
+
+static void
+shardunlink(Vector *v, VShard *s)
+{
+	memset(s->p, 0, Shardsz * v->elsz);
+	s->head = s->p;
+	s->prev->next = s->next;
+	s->next->prev = s->prev;
+}
+
+static VShard *
+shard(Vector *v)
+{
+	VShard *s;
+
+	s = emalloc(sizeof *s);
+	s->p = emalloc(v->elsz * Shardsz);
+	s->head = s->p;
+	shardlink(v, s);
+	return s;
 }
 
 void
-clearvec(Vector *v)
+vecfree(Vector *v)
 {
-	assert(v != nil);
-	if(v->p == nil)
-		return;
-	memset(v->p, 0, v->totsz);
-	v->firstempty = 0;
-	v->n = 0;
+	VShard *s, *t;
+
+	free(v->tmp);
+	for(s=v->vl.next; s!=&v->vl; s=t){
+		t = s->next;
+		free(s->p);
+		free(s);
+	}
+	free(v);
 }
 
 static void *
-growvec(Vector *v, int n)
+shardpop(Vector *v, VShard *s, int i)
 {
-	assert(v != nil);
-	if(n < v->bufsz)
-		return (uchar *)v->p + n * v->elsz;
-	v->p = erealloc(v->p, v->totsz + Nvecinc * v->elsz, v->totsz);
-	v->bufsz += Nvecinc;
-	v->totsz += Nvecinc * v->elsz;
-	return (uchar *)v->p + n * v->elsz;
+	uchar *p;
+
+	assert(s != &v->vl);
+	assert(i >= 0 && i < s->len);
+	p = (uchar *)s->head + i * v->elsz;
+	memcpy(v->tmp, p, v->elsz);
+	s->len--;
+	v->len--;
+	if(i == 0)
+		s->head = (uchar *)s->head + v->elsz;
+	if(s->len == 0){
+		shardunlink(v, s);
+		shardlink(v, s);
+	}
+	return v->tmp;
+}
+
+void *
+vechpop(Vector *v)
+{
+	uchar *p;
+	VShard *s;
+
+	if(v->len <= 0)
+		return nil;
+	s = v->vl.next;
+	assert(s != &v->vl);
+	return shardpop(v, s, 0);
+}
+
+void *
+vectpop(Vector *v)
+{
+	VShard *s;
+
+	if(v->len <= 0)
+		return nil;
+	for(s=v->vl.prev; s != &v->vl && s->len == 0; s=s->prev)
+		;
+	assert(s != &v->vl);
+	return shardpop(v, s, s->len - 1);
 }
 
 void
-popsparsevec(Vector *v, int n)
-{
-	assert(v != nil && v->elsz > 0 && n >= 0 && n < v->n);
-	memset((uchar *)v->p + n * v->elsz, 0, v->elsz);
-	if(n < v->firstempty)
-		v->firstempty = n;
-}
-
-/* assumes that zeroed element means empty; could fill with
- * magic values instead */
-void *
-pushsparsevec(Vector *v, void *e)
-{
-	int n;
-	uchar *p, *q;
-
-	assert(v != nil && v->elsz > 0);
-	n = v->firstempty;
-	p = growvec(v, n);
-	for(n++, q=p+v->elsz; n<v->n; n++, q+=v->elsz)
-		if(memcmp(p, q, v->elsz) == 0)
-			break;
-	v->firstempty = n;
-	memcpy(p, e, v->elsz);
-	v->n++;
-	return p;
-}
-
-void *
-popvec(Vector *v)
+vecpush(Vector *v, void *e)
 {
 	uchar *p;
+	VShard *s;
 
-	assert(v != nil && v->elsz > 0);
-	if(v->n <= 0)
-		return nil;
-	p = (uchar *)v->p + v->elsz * (v->n - 1);
-	if(v->firstempty > v->n - 1)
-		v->firstempty = v->n - 1;
-	v->n--;
-	return p;
+	for(s=v->vl.prev; s != &v->vl && s->len >= Shardsz; s=s->prev)
+		;
+	if(s == &v->vl)
+		s = shard(v);
+	p = (uchar *)s->head + s->len * v->elsz;
+	memcpy(p, e, v->elsz);
+	s->len++;
+	v->len++;
 }
 
 void *
-pushvec(Vector *v, void *e)
+vecget(Vector *v, int i)
 {
 	uchar *p;
+	VShard *s;
 
-	assert(v != nil && v->elsz > 0);
-	p = growvec(v, v->n);
-	memcpy(p, e, v->elsz);
-	v->n++;
-	v->firstempty = v->n;
-	if(v->firstempty > v->n)
-		v->firstempty = v->n;
-	return p;
+	assert(i >= 0 && i < v->len);
+	for(s=v->vl.next; s != &v->vl && i > s->len; s=s->next)
+		i -= s->len;
+	assert(s != &v->vl);
+	assert(s->len > 0);
+	assert(i >= 0 && i < s->len);
+	return (uchar *)s->head + i * v->elsz;
 }
 
-void *
-newvec(Vector *v, int nel, int elsz)
+Vector *
+vec(int elsz)
 {
-	assert(v != nil && elsz > 0);
+	Vector *v;
+	VShard *s;
+
+	assert(elsz > 0);
+	v = emalloc(sizeof *v);
 	v->elsz = elsz;
-	nel = nel + Nvecinc-1 & ~(Nvecinc-1);
-	v->bufsz = nel;
-	v->totsz = nel * elsz;
-	v->p = emalloc(v->totsz);
-	return v->p;
+	v->vl.next = v->vl.prev = &v->vl;
+	v->tmp = emalloc(elsz);
+	shard(v);
+	return v;
 }
