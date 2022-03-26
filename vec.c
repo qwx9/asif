@@ -76,7 +76,7 @@ vechpop(Vector *v)
 	if(v->len <= 0)
 		return nil;
 	s = v->vl.next;
-	assert(s != &v->vl);
+	assert(s != &v->vl && s->len > 0 && s->head - s->p < Shardsz * v->elsz);
 	return shardpop(v, s, 0);
 }
 
