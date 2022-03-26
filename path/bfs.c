@@ -27,9 +27,8 @@ successors8(Node *n)
 {
 	static Node *suc[8+1];
 	static dtab[2*(nelem(suc)-1)]={
-		-1,-1, 0,-1, 1,-1,
-		-1,0, 1,0,
-		-1,1, 0,1, 1,1,
+		0,-1, 1,0, 0,1, -1,0,
+		1,-1, 1,1, -1,1, -1,-1,
 	};
 	int i;
 	Node *s, **np;
@@ -83,41 +82,45 @@ successors4(Node *n)
 static Node *
 bfs(Node *a, Node *b)
 {
-	Vector v;
+	Vector *v;
 	Node *x, *s, **sl;
 
 	assert(a != nil && b != nil);
 	assert(a != b);
+	v = vec(sizeof a);
 	x = a;
-	newvec(&v, manhdist(a, b), sizeof a);
-	pushvec(&v, a);
-	while(v.n > 0){
-		x = popvec(&v);
+	vecpush(v, &x);
+	while(v->len > 0){
+		x = *((Node **)vechpop(v));
 		if(x == b)
 			break;
 		x->closed = 1;
 		if((sl = successorfn(x)) == nil)
 			sysfatal("bfs: %r");
 		for(s=*sl++; s!=nil; s=*sl++){
-			if(s->closed || s->open)
+			if(s->open)
 				continue;
 			s->from = x;
-			pushvec(&v, s);
+			vecpush(v, &s);
 			s->open = 1;
 		}
 	}
-	freevec(&v);
+	vecfree(v);
 	return x;
 }
 
 static int
 findpath(void)
 {
-	if(start == nil || goal == nil)
+	if(start == nil || goal == nil){
+		werrstr("findpath: start and/or goal undefined");
 		return -1;
+	}
 	resetmap();
-	if(bfs(start, goal) != goal)
+	if(bfs(start, goal) != goal){
+		werrstr("findpath: failed");
 		return -1;
+	}
 	backtrack();
 	return 0;
 }
@@ -126,8 +129,8 @@ int
 mouseinput(Node *n, Mouse m)
 {
 	switch(m.buttons & 7){
-	case 1: if(start != n) goal = n; return findpath();
-	case 2: if(goal != n) start = n; return findpath();
+	case 1: if(goal != n) start = n; return findpath();
+	case 2: if(start != n) goal = n; return findpath();
 	case 4: n->blocked ^= 1; break;
 	}
 	return 0;
