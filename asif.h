@@ -22,8 +22,8 @@ enum{
 typedef struct VShard VShard;
 typedef struct Vector Vector;
 struct VShard{
-	void *p;
-	void *head;
+	uchar *p;
+	uchar *head;
 	int len;
 	VShard *prev;
 	VShard *next;

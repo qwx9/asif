@@ -26,7 +26,7 @@ shard(Vector *v)
 	VShard *s;
 
 	s = emalloc(sizeof *s);
-	s->p = emalloc(v->elsz * Shardsz);
+	s->p = emalloc(Shardsz * v->elsz);
 	s->head = s->p;
 	shardlink(v, s);
 	return s;
@@ -53,23 +53,24 @@ shardpop(Vector *v, VShard *s, int i)
 
 	assert(s != &v->vl);
 	assert(i >= 0 && i < s->len);
-	p = (uchar *)s->head + i * v->elsz;
+	p = s->head + i * v->elsz;
+	assert(p < s->p + Shardsz * v->elsz);
 	memcpy(v->tmp, p, v->elsz);
 	s->len--;
 	v->len--;
 	if(i == 0)
-		s->head = (uchar *)s->head + v->elsz;
+		s->head += v->elsz;
 	if(s->len == 0){
 		shardunlink(v, s);
 		shardlink(v, s);
 	}
+	assert(s->head >= s->p && s->head < s->p + Shardsz * v->elsz);
 	return v->tmp;
 }
 
 void *
 vechpop(Vector *v)
 {
-	uchar *p;
 	VShard *s;
 
 	if(v->len <= 0)
@@ -98,11 +99,13 @@ vecpush(Vector *v, void *e)
 	uchar *p;
 	VShard *s;
 
-	for(s=v->vl.prev; s != &v->vl && s->len >= Shardsz; s=s->prev)
-		;
+	for(s=v->vl.prev; s != &v->vl; s=s->prev)
+		if(s->len + (s->head - s->p) / v->elsz < Shardsz)
+			break;
 	if(s == &v->vl)
 		s = shard(v);
-	p = (uchar *)s->head + s->len * v->elsz;
+	p = s->head + s->len * v->elsz;
+	assert(p >= s->p && p < s->p + Shardsz * v->elsz);
 	memcpy(p, e, v->elsz);
 	s->len++;
 	v->len++;
@@ -111,7 +114,6 @@ vecpush(Vector *v, void *e)
 void *
 vecget(Vector *v, int i)
 {
-	uchar *p;
 	VShard *s;
 
 	assert(i >= 0 && i < v->len);
@@ -120,14 +122,13 @@ vecget(Vector *v, int i)
 	assert(s != &v->vl);
 	assert(s->len > 0);
 	assert(i >= 0 && i < s->len);
-	return (uchar *)s->head + i * v->elsz;
+	return s->head + i * v->elsz;
 }
 
 Vector *
 vec(int elsz)
 {
 	Vector *v;
-	VShard *s;
 
 	assert(elsz > 0);
 	v = emalloc(sizeof *v);
