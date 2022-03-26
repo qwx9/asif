@@ -11,9 +11,6 @@ Node *selected;
 typedef Vertex Point;
 
 enum{
-	Nodesz = 8,
-};
-enum{
 	Cbg,
 	Cgrid,
 	Cfree,
@@ -81,29 +78,13 @@ drawhud(void)
 }
 
 static void
-drawmap(void)
+drawnodes(void)
 {
-	Rectangle r;
 	Node *n;
+	Rectangle r;
 	Image *c;
 
-	draw(view, view->r, col[Cfree], nil, ZP);
-	r = viewr;
-	while(r.min.x < viewr.max.x){
-		r.max.x = r.min.x;
-		line(view, r.min, r.max, 0, 0, 0, col[Cgrid], ZP);
-		r.min.x += Nodesz;
-	}
-	r = viewr;
-	while(r.min.y < viewr.max.y){
-		r.max.y = r.min.y;
-		line(view, r.min, r.max, 0, 0, 0, col[Cgrid], ZP);
-		r.min.y += Nodesz;
-	}
 	for(n=map; n<map+mapwidth*mapheight; n++){
-		r.min.x = (n - map) % mapwidth * Nodesz + 1;
-		r.min.y = (n - map) / mapwidth * Nodesz + 1;
-		r.max = addpt(r.min, Pt(Nodesz-1, Nodesz-1));
 		if(n->blocked)
 			c = col[Cblocked];
 		else if(n == start)
@@ -118,8 +99,46 @@ drawmap(void)
 			c = col[Copen];
 		else
 			continue;
+		r.min = n2s(n);
+		r.max = addpt(r.min, Pt(Nodesz-1, Nodesz-1));
 		draw(view, r, c, nil, ZP);
 	}
+}
+
+static void
+drawfrom(void)
+{
+	Node *n;
+	Point p0, p1;
+
+	for(n=map; n<map+mapwidth*mapheight; n++){
+		if(!n->open)
+			continue;
+		p1 = addpt(n2s(n), Pt(Nodesz / 2, Nodesz / 2));
+		p0 = addpt(n2s(n->from), Pt(Nodesz / 2, Nodesz / 2));
+		line(view, p0, p1, Endarrow, 0, 0, col[Cgrid], ZP);
+	}
+}
+static void
+drawmap(void)
+{
+	Rectangle r;
+
+	draw(view, view->r, col[Cfree], nil, ZP);
+	r = viewr;
+	while(r.min.x < viewr.max.x){
+		r.max.x = r.min.x;
+		line(view, r.min, r.max, 0, 0, 0, col[Cgrid], ZP);
+		r.min.x += Nodesz;
+	}
+	r = viewr;
+	while(r.min.y < viewr.max.y){
+		r.max.y = r.min.y;
+		line(view, r.min, r.max, 0, 0, 0, col[Cgrid], ZP);
+		r.min.y += Nodesz;
+	}
+	drawnodes();
+	drawfrom();
 }
 
 static void

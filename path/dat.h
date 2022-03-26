@@ -16,9 +16,12 @@ struct PNode{
 	Node *from;
 	Pairheap *pq;
 };
+enum{
+	Nodesz = 8,
+};
 struct Node{
 	int blocked;
-	PNode;		// generalize later
+	PNode;
 };
 extern Node *map;
 extern int mapwidth, mapheight;
