@@ -27,9 +27,8 @@ successors8(Node *n)
 {
 	static Node *suc[8+1];
 	static dtab[2*(nelem(suc)-1)]={
-		-1,-1, 0,-1, 1,-1,
-		-1,0, 1,0,
-		-1,1, 0,1, 1,1,
+		0,-1, 1,0, 0,1, -1,0,
+		1,-1, 1,1, -1,1, -1,-1,
 	};
 	int i;
 	Node *s, **np;
@@ -139,8 +138,8 @@ int
 mouseinput(Node *n, Mouse m)
 {
 	switch(m.buttons & 7){
-	case 1: if(start != n) goal = n; return findpath();
-	case 2: if(goal != n) start = n; return findpath();
+	case 1: if(goal != n) start = n; return findpath();
+	case 2: if(start != n) goal = n; return findpath();
 	case 4: n->blocked ^= 1; break;
 	}
 	return 0;
