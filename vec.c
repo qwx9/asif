@@ -9,6 +9,10 @@ shardlink(Vector *v, VShard *s)
 	s->prev = v->vl.prev;
 	s->prev->next = s;
 	v->vl.prev = s;
+//	fprint(2, "%#p len %d link: ", v, v->len);
+//	for(s=v->vl.next; s!=&v->vl; s=s->next)
+//		fprint(2, "%#p[%d,%zd] → ", s, s->len, (s->head - s->p) / v->elsz);
+//	fprint(2, "%#p\n", &v->vl);
 }
 
 static void
@@ -18,6 +22,10 @@ shardunlink(Vector *v, VShard *s)
 	s->head = s->p;
 	s->prev->next = s->next;
 	s->next->prev = s->prev;
+//	fprint(2, "%#p len %d link: ", v, v->len);
+//	for(s=v->vl.next; s!=&v->vl; s=s->next)
+//		fprint(2, "%#p[%d,%zd] → ", s, s->len, (s->head - s->p) / v->elsz);
+//	fprint(2, "%#p\n", &v->vl);
 }
 
 static VShard *
@@ -28,6 +36,7 @@ shard(Vector *v)
 	s = emalloc(sizeof *s);
 	s->p = emalloc(Shardsz * v->elsz);
 	s->head = s->p;
+//	fprint(2, "%#p len %d shard %#p\n", v, v->len, s);
 	shardlink(v, s);
 	return s;
 }
@@ -37,6 +46,7 @@ vecfree(Vector *v)
 {
 	VShard *s, *t;
 
+//	fprint(2, "%#p len %d free\n", v, v->len);
 	free(v->tmp);
 	for(s=v->vl.next; s!=&v->vl; s=t){
 		t = s->next;
@@ -50,7 +60,9 @@ static void *
 shardpop(Vector *v, VShard *s, int i)
 {
 	uchar *p;
+	VShard *t;
 
+//	fprint(2, "%#p len %d pop %#p[%d,%zd] i %d\n", v, v->len, s, s->len, (s->head - s->p) / v->elsz, i);
 	assert(s != &v->vl);
 	assert(i >= 0 && i < s->len);
 	p = s->head + i * v->elsz;
@@ -60,10 +72,10 @@ shardpop(Vector *v, VShard *s, int i)
 	v->len--;
 	if(i == 0)
 		s->head += v->elsz;
-	if(s->len == 0){
-		shardunlink(v, s);
-		shardlink(v, s);
-	}
+	for(t=v->vl.next; t->len == 0 && t!=&v->vl; t=t->next){
+		shardunlink(v, t);
+		shardlink(v, t);
+	} 
 	assert(s->head >= s->p && s->head < s->p + Shardsz * v->elsz);
 	return v->tmp;
 }
@@ -76,6 +88,10 @@ vechpop(Vector *v)
 	if(v->len <= 0)
 		return nil;
 	s = v->vl.next;
+//	fprint(2, "vechpop %#p len %d s %#p len %d Δhead %zd prev %#p next %#p\n",
+//		v, v->len, s, s->len, s->head - s->p, s->prev, s->next);
+	/* FIXME: crash here with first el.len == 0; second .len == 64
+	 * moving source */
 	assert(s != &v->vl && s->len > 0 && s->head - s->p < Shardsz * v->elsz);
 	return shardpop(v, s, 0);
 }
@@ -89,6 +105,8 @@ vectpop(Vector *v)
 		return nil;
 	for(s=v->vl.prev; s != &v->vl && s->len == 0; s=s->prev)
 		;
+//	fprint(2, "vectpop %#p len %d s %#p len %d Δhead %zd prev %#p next %#p\n",
+//		v, v->len, s, s->len, s->head - s->p, s->prev, s->next);
 	assert(s != &v->vl);
 	return shardpop(v, s, s->len - 1);
 }
@@ -99,9 +117,10 @@ vecpush(Vector *v, void *e)
 	uchar *p;
 	VShard *s;
 
-	for(s=v->vl.prev; s != &v->vl; s=s->prev)
+	for(s=v->vl.next; s != &v->vl; s=s->next)
 		if(s->len + (s->head - s->p) / v->elsz < Shardsz)
 			break;
+//	fprint(2, "%#p len %d push s %#p[%d,%zd]\n", v, v->len, s, s->len, (s->head - s->p) / v->elsz);
 	if(s == &v->vl)
 		s = shard(v);
 	p = s->head + s->len * v->elsz;
