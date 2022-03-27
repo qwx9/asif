@@ -138,10 +138,12 @@ int
 mouseinput(Node *n, Mouse m)
 {
 	switch(m.buttons & 7){
-	case 1: if(goal != n) start = n; return findpath();
-	case 2: if(start != n) goal = n; return findpath();
-	case 4: n->blocked ^= 1; break;
+	case 1: if(goal != n && !n->blocked) start = n; break;
+	case 2: if(start != n && !n->blocked) goal = n; break;
+	case 4: n->blocked ^= 1; return 0;
 	}
+	if(start != nil && goal != nil)
+		return findpath();
 	return 0;
 }
 
