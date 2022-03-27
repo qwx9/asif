@@ -10,7 +10,7 @@
 #include "fns.h"
 
 extern QLock drawlock;
-int	mouseinput(Node*, Mouse);
+int	mouseinput(Node*, Mouse, Node*);
 int	keyinput(Rune);
 Node*	scrselect(Point);
 void	updatedrw(void);
@@ -46,13 +46,15 @@ evloop(void)
 			resetdrw();
 			break;
 		case Amouse:
-			if(mc->buttons == 0)
+			if(mc->buttons == 0){
+				p = nil;
 				break;
-			if((n = scrselect(m.xy)) != nil && p != n){
-				if(mouseinput(n, mc->Mouse) < 0)
-					fprint(2, "%r\n");
 			}
-			p = n;
+			if((n = scrselect(m.xy)) != nil && p != n){
+				if(mouseinput(n, mc->Mouse, p) < 0)
+					fprint(2, "%r\n");
+				p = n;
+			}
 			updatedrw();
 			break;
 		case Akbd:

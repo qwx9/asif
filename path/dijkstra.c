@@ -135,12 +135,12 @@ findpath(void)
 }
 
 int
-mouseinput(Node *n, Mouse m)
+mouseinput(Node *n, Mouse m, Node *old)
 {
 	switch(m.buttons & 7){
 	case 1: if(goal != n && !n->blocked) start = n; break;
 	case 2: if(start != n && !n->blocked) goal = n; break;
-	case 4: n->blocked ^= 1; return 0;
+	case 4: if(old == nil || n->blocked ^ old->blocked) n->blocked ^= 1; return 0;
 	}
 	if(start != nil && goal != nil)
 		return findpath();
