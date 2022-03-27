@@ -4,6 +4,8 @@
 #include "dat.h"
 #include "fns.h"
 
+Node *start, *goal;
+
 Node *map;
 int mapwidth, mapheight;
 int fourdir;

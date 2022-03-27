@@ -11,6 +11,7 @@ OFILES=\
 	client.$O\
 	drw.$O\
 	fs.$O\
+	grid.$O\
 	map.$O\
 
 </sys/src/cmd/mkmany

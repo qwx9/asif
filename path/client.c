@@ -10,10 +10,11 @@
 #include "fns.h"
 
 extern QLock drawlock;
-int	mouseinput(Node*, Mouse, Node*);
-int	keyinput(Rune);
 Node*	scrselect(Point);
 void	updatedrw(void);
+
+int	(*mousefn)(Node*, Mouse, Node*);
+int	(*keyfn)(Rune);
 
 static Keyboardctl *kc;
 static Mousectl *mc;
@@ -51,7 +52,7 @@ evloop(void)
 				break;
 			}
 			if((n = scrselect(m.xy)) != nil && p != n){
-				if(mouseinput(n, mc->Mouse, p) < 0)
+				if(mousefn(n, mc->Mouse, p) < 0)
 					fprint(2, "%r\n");
 				p = n;
 			}
@@ -62,7 +63,7 @@ evloop(void)
 			case Kdel: threadexitsall(nil);
 			case 'r': clearmap(); updatedrw(); break;
 			}
-			keyinput(r);
+			keyfn(r);
 			break;
 		}
 		m = mc->Mouse;

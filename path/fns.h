@@ -1,6 +1,7 @@
 void	init(int, char**);
 void	evloop(void);
 void	initfs(void);
+void	initgrid(Node* (*)(Node*, Node*));
 void	resetmap(void);
 void	clearmap(void);
 void	initmap(void);

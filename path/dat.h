@@ -28,3 +28,7 @@ extern int mapwidth, mapheight;
 extern Node *selected;
 extern Node *start, *goal;
 extern int fourdir;
+
+extern double	(*distfn)(Node*, Node*);
+extern Node**	(*successorfn)(Node*);
+extern Node*	(*pathfn)(Node*, Node*);
