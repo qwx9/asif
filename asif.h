@@ -91,3 +91,13 @@ void*	emalloc(ulong);
 #define MAX(a,b)	((a) >= (b) ? (a) : (b))
 
 #define SQRT2 1.4142135623730951
+
+enum{
+	Lognone,
+	Logdebug,
+	Logtrace,
+};
+extern int debuglevel;
+
+void	dprint(char *, ...);
+#pragma	varargck	argpos	dprint	1
