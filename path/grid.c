@@ -50,8 +50,7 @@ successors8(Node *n)
 		assert(s >= map && s < map + mapwidth * mapheight);
 		if(isblocked(s))
 			continue;
-		s->Δg = 1;
-		//s->Δg = dtab[i] != 0 && dtab[i+1] != 0 ? SQRT2 : 1;
+		s->Δg = dtab[i] != 0 && dtab[i+1] != 0 ? 1+0.001 : 1.0;
 		*np++ = s;
 	}
 	return suc;
