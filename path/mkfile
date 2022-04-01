@@ -8,6 +8,7 @@ TARG=\
 HFILES=../asif.h dat.h fns.h
 OFILES=\
 	../emalloc.$O\
+	../dprint.$O\
 	client.$O\
 	drw.$O\
 	fs.$O\
