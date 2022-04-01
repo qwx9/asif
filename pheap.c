@@ -91,6 +91,7 @@ popqueue(Pairheap **queue)
 	p = *queue;
 	if(p == nil)
 		return nil;
+	dprint(Logtrace, "pheap::popqueue %#p %.6f\n", p, p->n);
 	*queue = mergepairs(p->left);
 	return p;
 }
@@ -98,9 +99,19 @@ popqueue(Pairheap **queue)
 void
 decreasekey(Pairheap *p, double Δ, Pairheap **queue)
 {
+	Pairheap *q;
+
+	dprint(Logtrace, "pheap::decreasekey %#p %.6f Δ %.6f\n", p, p->n, Δ);
 	p->n -= Δ;
 	if(p->parent != nil && p->n < p->parent->n){
-		p->parent->left = nil;
+		if(p->parent->left == p)
+			p->parent->left = nil;
+		else{
+			for(q=p->parent->left; q->right!=p; q=q->right)
+				;
+			assert(q != nil);
+			q->right = p->right;
+		}
 		p->parent = nil;
 		*queue = mergequeue(p, *queue);
 	}
@@ -115,5 +126,6 @@ pushqueue(double n, void *aux, Pairheap **queue)
 	p->n = n;
 	p->aux = aux;
 	*queue = mergequeue(p, *queue);
+	dprint(Logtrace, "pheap::pushqueue %#p %.6f\n", p, p->n);
 	return p;
 }
