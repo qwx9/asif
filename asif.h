@@ -99,5 +99,5 @@ enum{
 };
 extern int debuglevel;
 
-void	dprint(char *, ...);
-#pragma	varargck	argpos	dprint	1
+void	dprint(int, char *, ...);
+#pragma	varargck	argpos	dprint	2

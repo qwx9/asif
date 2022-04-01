@@ -5,12 +5,12 @@
 int debuglevel;
 
 void
-dprint(char *fmt, ...)
+dprint(int level, char *fmt, ...)
 {
 	char s[256];
 	va_list arg;
 
-	if(debuglevel == Lognone)
+	if(level < debuglevel)
 		return;
 	va_start(arg, fmt);
 	vseprint(s, s+sizeof s, fmt, arg);
