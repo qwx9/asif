@@ -2,6 +2,42 @@
 #include <libc.h>
 #include "asif.h"
 
+/* Fredman, M.L., Sedgewick, R., Sleator, D.D.  et al.  The pairing
+ * heap: A new form of self-adjusting heap.  Algorithmica 1, 111–129
+ * (1986).  */
+
+static void
+printright(Pairheap *p, int level)
+{
+	int i, j;
+	Pairheap *q;
+
+	if(p == nil)
+		return;
+	fprint(2, "(\n");
+	for(i=0; i<level; i++)
+		fprint(2, "\t");
+	for(q=p, j=0; q!=nil; q=q->right, j++){
+		fprint(2, "[%#p,%.5f]", q, q->n);
+		printright(q->left, level+1);
+	}
+	fprint(2, "\n");
+	for(i=0; i<level-1; i++)
+		fprint(2, "\t");
+	fprint(2, ")");
+}
+static void
+printqueue(Pairheap *p)
+{
+	if(debuglevel == 0)
+		return;
+	if(p == nil)
+		return;
+	fprint(2, "pheap ");
+	printright(p, 1);
+	fprint(2, "\n");
+}
+
 static Pairheap *
 mergequeue(Pairheap *a, Pairheap *b)
 {
