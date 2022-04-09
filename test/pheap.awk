@@ -1,5 +1,4 @@
 #!/bin/awk -f
-# "(open|pop|decreasekey|remain|occ)" memaddr "["x y"]" "g" g
 BEGIN{
 	print \
 "#include <u.h>\n" \
@@ -11,9 +10,10 @@ BEGIN{
 "int i;\n" \
 "queue = nil;\n"
 }
-$1 == "open" {
-	v = $3 " " $4
-	c = int($6 * 1e3)
+# pheap::pushqueue addr v
+$1 == "pheap::pushqueue" {
+	v = $2
+	c = int($3 * 1e3)
 	if(v in g)
 		print "warning: duplicate open node: " $0 >"/fd/2"
 	g[v] = c
@@ -22,22 +22,24 @@ $1 == "open" {
 	print \
 "Pairheap *a" n[v] " = pushqueue(" g[v] ", estrdup(\"" v "\"), &queue);"
 }
-$1 == "pop" {
-	v = $3 " " $4
-	c = int($6 * 1e3)
+# pheap::popqueue addr v
+$1 == "pheap::popqueue" {
+	v = $2
+	c = int($3 * 1e3)
 	if(g[v] != c)
 		print "warning: cost g mismatch: " g[v] " vs " $0 >"/fd/2"
 	if(n[v] == "")
 		print "warning: empty name: " $0 >"/fd/2"
 	print \
-"a = popqueue(&queue);\n" \
-	"\ti = strcmp((char*)a->aux, \"" v "\");\n" \
-	"\t//assert(i == 0);\n" \
-	"\tassert(a->n == " c ");"
+"a = popqueue(&queue);" \
+	#"\n\ti = strcmp((char*)a->aux, \"" v "\");\n" \
+	#"\tassert(i == 0);\n" \
+	#"\tassert(a->n == " c ");"
 }
-$1 == "decreasekey" {
-	v = $3 " " $4
-	c = int($6 * 1e3)
+# pheap::decreasekey addr old diff\nold
+$1 == "pheap::decreasekey" {
+	v = $2
+	c = int($3 * 1e3)
 	d = g[v] - c
 	if(g[v] == 0)
 		print "warning: undefined node \"" v "\" is decreased!" >"/fd/2"
@@ -46,7 +48,7 @@ $1 == "decreasekey" {
 "decreasekey(a" n[v] ", " d ", &queue);"
 }
 $1 == "remain" {
-	v = $3 " " $4
+	v = $2
 	print \
 "a = popqueue(&queue);\n" \
 	"\ti = strcmp((char*)a->aux, \"" v "\");\n" \
@@ -57,8 +59,13 @@ $1 == "occ" {
 "// " $0
 }
 END {
-	print \
-"a = popqueue(&queue);\n" \
-"assert(a == nil);\n" \
+#	print \
+#"a = popqueue(&queue);\n" \
+#assert(a == nil);\n" \
+#"}"
+print \
+"printqueue(&queue);\n" \
+"nukequeue(&queue);\n" \
+"exits(nil);\n" \
 "}"
 }
