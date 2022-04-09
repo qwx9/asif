@@ -7,9 +7,23 @@
  * (1986).  */
 
 static void
+checkheap(Pairheap *p, Pairheap *queue)
+{
+	Pairheap *q;
+
+	if(p == nil || queue == nil)
+		return;
+	if(p == queue)
+		fprint(2, "pheap::checkheap %#p\n", p);
+	assert(p == queue || p->parent != nil && p->parent != p);
+	for(q=p; q!=nil; q=q->right)
+		checkheap(q->left, queue);
+}
+
+static void
 printright(Pairheap *p, int level)
 {
-	int i, j;
+	int i;
 	Pairheap *q;
 
 	if(p == nil)
@@ -17,7 +31,7 @@ printright(Pairheap *p, int level)
 	fprint(2, "(\n");
 	for(i=0; i<level; i++)
 		fprint(2, "\t");
-	for(q=p, j=0; q!=nil; q=q->right, j++){
+	for(q=p; q!=nil; q=q->right){
 		fprint(2, "[%#p,%.5f]", q, q->n);
 		printright(q->left, level+1);
 	}
@@ -26,21 +40,30 @@ printright(Pairheap *p, int level)
 		fprint(2, "\t");
 	fprint(2, ")");
 }
-static void
-printqueue(Pairheap *p)
+void
+printqueue(Pairheap **queue)
 {
-	if(debuglevel == 0)
+	if(queue == nil)
 		return;
-	if(p == nil)
-		return;
-	fprint(2, "pheap ");
-	printright(p, 1);
+	fprint(2, "pheap::printqueue %#p ", *queue);
+	printright(*queue, 1);
 	fprint(2, "\n");
+}
+
+static void
+debugqueue(Pairheap **queue)
+{
+	if(debuglevel < Logtrace || queue == nil)
+		return;
+	printqueue(queue);
+	checkheap(*queue, *queue);
 }
 
 static Pairheap *
 mergequeue(Pairheap *a, Pairheap *b)
 {
+	dprint(Logtrace, "pheap::mergequeue %#p %.6f b %#p %.6f\n",
+		a, a->n, b, b!=nil ? b->n : NaN());
 	if(b == nil)
 		return a;
 	else if(a->n < b->n){
@@ -57,21 +80,27 @@ mergequeue(Pairheap *a, Pairheap *b)
 }
 
 static Pairheap *
-mergepairs(Pairheap *a)
+mergepairs(Pairheap *a, Pairheap *q)
 {
 	Pairheap *b, *c;
 
 	if(a == nil)
 		return nil;
+	if(a->parent != nil && a->parent->left == a)
+		a->parent->left = nil;
 	a->parent = nil;
+	assert(a->parent == nil || a->parent->left != a);
 	b = a->right;
 	if(b == nil)
 		return a;
 	a->right = nil;
+	if(b->parent != nil && b->parent->left == b)
+		b->parent->left = nil;
 	b->parent = nil;
+	assert(b->parent == nil || b->parent->left != b);
 	c = b->right;
 	b->right = nil;
-	return mergequeue(mergequeue(a, b), mergepairs(c));
+	return mergequeue(mergequeue(a, b), mergepairs(c, q));
 }
 
 void
@@ -79,8 +108,11 @@ nukequeue(Pairheap **queue)
 {
 	Pairheap *p;
 
-	while((p = popqueue(queue)) != nil)
+	dprint(Logtrace, "pheap::nukequeue %#p\n", queue);
+	while((p = popqueue(queue)) != nil){
+		debugqueue(&p);
 		free(p);
+	}
 }
 
 Pairheap *
@@ -92,7 +124,8 @@ popqueue(Pairheap **queue)
 	if(p == nil)
 		return nil;
 	dprint(Logtrace, "pheap::popqueue %#p %.6f\n", p, p->n);
-	*queue = mergepairs(p->left);
+	*queue = mergepairs(p->left, p);
+	debugqueue(queue);
 	return p;
 }
 
@@ -104,16 +137,19 @@ decreasekey(Pairheap *p, double Δ, Pairheap **queue)
 	dprint(Logtrace, "pheap::decreasekey %#p %.6f Δ %.6f\n", p, p->n, Δ);
 	p->n -= Δ;
 	if(p->parent != nil && p->n < p->parent->n){
+		assert(p->parent->left != nil);
 		if(p->parent->left == p)
-			p->parent->left = nil;
+			p->parent->left = p->right;
 		else{
-			for(q=p->parent->left; q->right!=p; q=q->right)
-				;
+			for(q=p->parent->left; q!=nil && q!=p; q=q->right)
+				if(q->right == p)
+					break;
 			assert(q != nil);
 			q->right = p->right;
 		}
 		p->parent = nil;
 		*queue = mergequeue(p, *queue);
+		debugqueue(queue);
 	}
 }
 
@@ -125,7 +161,8 @@ pushqueue(double n, void *aux, Pairheap **queue)
 	p = emalloc(sizeof *p);
 	p->n = n;
 	p->aux = aux;
-	*queue = mergequeue(p, *queue);
 	dprint(Logtrace, "pheap::pushqueue %#p %.6f\n", p, p->n);
+	*queue = mergequeue(p, *queue);
+	debugqueue(queue);
 	return p;
 }

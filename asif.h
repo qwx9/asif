@@ -75,6 +75,7 @@ struct Pairheap{
 	Pairheap *left;
 	Pairheap *right;
 };
+void	printqueue(Pairheap**);
 void	nukequeue(Pairheap**);
 Pairheap*	popqueue(Pairheap**);
 void	decreasekey(Pairheap*, double, Pairheap**);
@@ -96,6 +97,7 @@ enum{
 	Lognone,
 	Logdebug,
 	Logtrace,
+	Logparanoid,
 };
 extern int debuglevel;
 
