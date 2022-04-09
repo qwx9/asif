@@ -73,7 +73,7 @@ evloop(void)
 static void
 usage(void)
 {
-	fprint(2, "usage: %s [-4] [-s width[,height]]\n", argv0);
+	fprint(2, "usage: %s [-D4] [-s width[,height]]\n", argv0);
 	threadexits("usage");
 }
 
@@ -85,6 +85,10 @@ init(int argc, char **argv)
 	mapwidth = 64;
 	mapheight = 64;
 	ARGBEGIN{
+	case 'D':
+		if(++debuglevel >= Logtrace)
+			mainmem->flags |= POOL_NOREUSE | POOL_PARANOIA | POOL_LOGGING;
+		break;
 	case '4':
 		fourdir = 1;
 		break;
@@ -102,7 +106,6 @@ init(int argc, char **argv)
 		break;
 	default: usage();
 	}ARGEND
-	//mainmem->flags |= POOL_PARANOIA | POOL_NOREUSE;
 	fmtinstall('P', Pfmt);
 	fmtinstall('R', Rfmt);
 	initfs();
