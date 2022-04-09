@@ -9,6 +9,8 @@
 #include "dat.h"
 #include "fns.h"
 
+mainstacksize = 512*1024;
+
 extern QLock drawlock;
 Node*	scrselect(Point);
 void	updatedrw(void);
@@ -86,7 +88,7 @@ init(int argc, char **argv)
 	mapheight = 64;
 	ARGBEGIN{
 	case 'D':
-		if(++debuglevel >= Logtrace)
+		if(++debuglevel >= Logparanoid)
 			mainmem->flags |= POOL_NOREUSE | POOL_PARANOIA | POOL_LOGGING;
 		break;
 	case '4':
@@ -106,6 +108,9 @@ init(int argc, char **argv)
 		break;
 	default: usage();
 	}ARGEND
+	if(mapwidth <= 0 || mapwidth > 512
+	|| mapheight <= 0 || mapheight > 512)
+		sysfatal("invalid map size, must be in ]0,512]");
 	fmtinstall('P', Pfmt);
 	fmtinstall('R', Rfmt);
 	initfs();

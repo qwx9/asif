@@ -42,6 +42,6 @@ void
 threadmain(int argc, char **argv)
 {
 	init(argc, argv);
-	initgrid(bfs);
+	initgrid(bfs, nil);
 	evloop();
 }

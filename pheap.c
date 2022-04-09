@@ -6,6 +6,11 @@
  * heap: A new form of self-adjusting heap.  Algorithmica 1, 111–129
  * (1986).  */
 
+/* this implementation requires a bigger stack size if the heap can
+ * grow big (8192 is already insufficient with 40-50 nodes);
+ * otherwise, stack overflows hidden behind more cryptic memory pool
+ * corruption errors will occur */
+
 static void
 checkheap(Pairheap *p, Pairheap *queue)
 {
@@ -53,7 +58,7 @@ printqueue(Pairheap **queue)
 static void
 debugqueue(Pairheap **queue)
 {
-	if(debuglevel < Logtrace || queue == nil)
+	if(debuglevel < Logparanoid || queue == nil)
 		return;
 	printqueue(queue);
 	checkheap(*queue, *queue);
@@ -62,7 +67,7 @@ debugqueue(Pairheap **queue)
 static Pairheap *
 mergequeue(Pairheap *a, Pairheap *b)
 {
-	dprint(Logtrace, "pheap::mergequeue %#p %.6f b %#p %.6f\n",
+	dprint(Logparanoid, "pheap::mergequeue %#p %.6f b %#p %.6f\n",
 		a, a->n, b, b!=nil ? b->n : NaN());
 	if(b == nil)
 		return a;
@@ -108,7 +113,7 @@ nukequeue(Pairheap **queue)
 {
 	Pairheap *p;
 
-	dprint(Logtrace, "pheap::nukequeue %#p\n", queue);
+	dprint(Logparanoid, "pheap::nukequeue %#p\n", queue);
 	while((p = popqueue(queue)) != nil){
 		debugqueue(&p);
 		free(p);
@@ -123,7 +128,7 @@ popqueue(Pairheap **queue)
 	p = *queue;
 	if(p == nil)
 		return nil;
-	dprint(Logtrace, "pheap::popqueue %#p %.6f\n", p, p->n);
+	dprint(Logparanoid, "pheap::popqueue %#p %.6f\n", p, p->n);
 	*queue = mergepairs(p->left, p);
 	debugqueue(queue);
 	return p;
@@ -134,7 +139,7 @@ decreasekey(Pairheap *p, double Δ, Pairheap **queue)
 {
 	Pairheap *q;
 
-	dprint(Logtrace, "pheap::decreasekey %#p %.6f Δ %.6f\n", p, p->n, Δ);
+	dprint(Logparanoid, "pheap::decreasekey %#p %.6f Δ %.6f\n", p, p->n, Δ);
 	p->n -= Δ;
 	if(p->parent != nil && p->n < p->parent->n){
 		assert(p->parent->left != nil);
@@ -161,7 +166,7 @@ pushqueue(double n, void *aux, Pairheap **queue)
 	p = emalloc(sizeof *p);
 	p->n = n;
 	p->aux = aux;
-	dprint(Logtrace, "pheap::pushqueue %#p %.6f\n", p, p->n);
+	dprint(Logparanoid, "pheap::pushqueue %#p %.6f\n", p, p->n);
 	*queue = mergequeue(p, *queue);
 	debugqueue(queue);
 	return p;

@@ -8,6 +8,15 @@
 #include "dat.h"
 #include "fns.h"
 
+/* currently uniform cost search and no reprioritizing (decrease-key operation) */
+
+/* explore in all directions at the same time */
+static double
+movecost(int Δx, int Δy)
+{
+	return Δx != 0 && Δy != 0 ? SQRT2 : 1.0;
+}
+
 static Node *
 dijkstra(Node *a, Node *b)
 {
@@ -18,14 +27,16 @@ dijkstra(Node *a, Node *b)
 	assert(a != nil && b != nil);
 	assert(a != b);
 	queue = nil;
-	x = a;
 	a->pq = pushqueue(0, a, &queue);
+	x = a;
 	while((pn = popqueue(&queue)) != nil){
 		x = pn->aux;
 		free(pn);
 		if(x == b)
 			break;
 		x->closed = 1;
+		dprint(Logtrace, "dijkstrdijkstra: closed [%#p,%P] h %.4f g %.4f\n",
+			x, n2p(x), x->h, x->g);
 		if((sl = successorfn(x)) == nil)
 			sysfatal("dijkstra: %r");
 		for(s=*sl++; s!=nil; s=*sl++){
@@ -38,12 +49,9 @@ dijkstra(Node *a, Node *b)
 				s->from = x;
 				s->open = 1;
 				s->g = g;
+				dprint(Logtrace, "dijkstra: opened [%#p,%P] h %.4f g %.4f f %.4f\n",
+					s, n2p(s), s->h, s->g, s->h + s->g);
 				s->pq = pushqueue(s->g, s, &queue);
-			}else if(Δg > 0){
-				s->from = x;
-				s->g -= Δg;
-				decreasekey(s->pq, Δg, &queue);
-				assert(s->g >= 0);
 			}
 		}
 	}
@@ -55,6 +63,6 @@ void
 threadmain(int argc, char **argv)
 {
 	init(argc, argv);
-	initgrid(dijkstra);
+	initgrid(dijkstra, movecost);
 	evloop();
 }
