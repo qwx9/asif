@@ -16,13 +16,22 @@ vfree(VArray *v)
 }
 
 void
+vnuke(VArray *v)
+{
+	if(v == nil)
+		return;
+	memset(v->p, 0, v->bufsize);
+	v->n = 0;
+}
+
+void
 vinsert(VArray *v, char *u)
 {
 	int off;
 
 	assert(v != nil && u != nil);
 	off = v->n * v->elsize;
-	if(v->n++ >= v->bufsize){
+	if(v->n++ >= v->vsize){
 		v->p = erealloc(v->p, v->bufsize * 2, v->bufsize);
 		v->bufsize *= 2;
 		v->vsize *= 2;
@@ -38,6 +47,8 @@ valloc(ulong n, int elsize)
 	v = emalloc(sizeof *v);
 	v->n = 0;
 	v->elsize = elsize;
+	if(n <= 0)
+		n = VAdefsize;
 	v->vsize = MIN(n, VAdefsize);
 	v->bufsize = v->vsize * elsize;
 	v->p = emalloc(v->bufsize);
