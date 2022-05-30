@@ -13,6 +13,7 @@ struct VArray{
 	void *p;
 };
 void	vfree(VArray*);
+void	vnuke(VArray*);
 void	vinsert(VArray*, char*);
 VArray*	valloc(ulong, int);
 
@@ -66,6 +67,24 @@ VArray*	morrispratt(String, String);
 VArray*	knuthmorrispratt(String, String);
 VArray*	rabinkarp(String, String, int, int);
 VArray*	rabinkarp8(String, String);
+
+enum{
+	Hashsz = 101,
+};
+typedef struct HTab HTab;
+typedef struct HPair HPair;
+struct HPair{
+	char *key;
+	void *val;
+	HPair *next;
+};
+struct HTab{
+	HPair b[Hashsz];
+};
+
+void*	htget(HTab*, char*);
+void	htput(HTab*, char*, void*);
+HTab*	htalloc(void);
 
 typedef struct Pairheap Pairheap;
 struct Pairheap{
