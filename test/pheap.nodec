@@ -1,0 +1,33 @@
+#!/bin/rc
+awk '
+BEGIN{
+	srand()
+	nnodes = 1e4
+	if(ARGC > 1)
+		nnodes = int(ARGV[1])
+	if(nnodes < 10){
+		print "usage: " ARGV[0] " [nnodes]" >"/fd/2"
+		exit "usage"
+	}
+	for(i=1; i<=nnodes; i++){
+		a[i] = int(rand() * 1e8);
+		printf "%d\n", a[i] | "sort -n"
+	}
+	close("sort -n")
+	print \
+		"#include <u.h>\n" \
+		"#include <libc.h>\n" \
+		"#include \"asif.h\"\n" \
+		"debuglevel = Logtrace;\n\n" \
+		"void main(void) {\n" \
+		"Pairheap *queue, *a;\n" \
+		"int i;\n" \
+		"queue = nil;\n" >"test.c"
+	for(i=1; i<=nnodes; i++)
+		print "pushqueue("a[i]", \"\", &queue);" >>"test.c"
+	print "while((a = popqueue(&queue)) != nil)\n" \
+		"print(\"%lld\\n\", (vlong)a->n);\n" \
+		"exits(nil);\n" \
+		"}" >>"test.c"
+}
+' $*
