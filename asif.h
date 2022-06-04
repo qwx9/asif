@@ -106,19 +106,13 @@ void*	erealloc(void*, ulong, ulong);
 void*	emalloc(ulong);
 
 typedef struct Zpool Zpool;
-typedef struct Znode Znode;
-struct Znode{
-	Znode *next;
-	Znode *prev;
+struct Zpool{
+	usize elsize;
 	void data[];
 };
-struct Zpool{
-	int elsize;
-	Znode;
-};
-void	zfree(Znode*, Zpool*);
+void	zfree(void*);
 void*	zalloc(Zpool*);
-Zpool*	znew(int);
+Zpool*	znew(usize);
 
 #define MIN(a,b)	((a) <= (b) ? (a) : (b))
 #define MAX(a,b)	((a) >= (b) ? (a) : (b))
