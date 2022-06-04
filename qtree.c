@@ -2,49 +2,7 @@
 #include <libc.h>
 #include "asif.h"
 
-enum{
-	Ninc = 128,
-};
-
-/* no nodes are ever freed */
-static QNode freeq = { .next = &freeq, .prev = &freeq };
-
-static void
-qtlink(QNode *q)
-{
-	assert(q != nil);
-	q->prev = freeq.prev;
-	q->next = &freeq;
-	freeq.prev->next = q;
-	freeq.prev = q;
-}
-
-static void
-qtfree(QNode *q)
-{
-	if(q == nil)
-		return;
-	free(q->aux);
-	memset(q, 0, sizeof *q);
-	qtlink(q);
-}
-
-static QNode *
-qtalloc(void)
-{
-	QNode *q, *fq;
-
-	if(freeq.next == &freeq){
-		q = emalloc(Ninc * sizeof *q);
-		for(fq=q; fq<q+Ninc; fq++)
-			qtlink(fq);
-	}
-	q = freeq.next;
-	q->next->prev = &freeq;
-	freeq.next = q->next;
-	q->prev = q->next = nil;
-	return q;
-}
+static Zpool *zpool;
 
 QNode *
 qtmerge(QNode *q)
@@ -55,10 +13,10 @@ qtmerge(QNode *q)
 	qtmerge(q->right);
 	qtmerge(q->up);
 	qtmerge(q->down);
-	qtfree(q->left);
-	qtfree(q->right);
-	qtfree(q->up);
-	qtfree(q->down);
+	zfree(q->left, zpool);
+	zfree(q->right, zpool);
+	zfree(q->up, zpool);
+	zfree(q->down, zpool);
 	q->left = q->right = q->up = q->down = nil;
 	return q;
 }
@@ -66,10 +24,23 @@ qtmerge(QNode *q)
 QNode *
 qtsplit(QNode *q)
 {
+	if(q == nil)
+		return nil;
 	assert(q->left == nil && q->right == nil && q->up == nil && q->down == nil);
-	q->left = qtalloc();
-	q->right = qtalloc();
-	q->up = qtalloc();
-	q->down = qtalloc();
+	q->left = zalloc(zpool);
+	q->right = zalloc(zpool);
+	q->up = zalloc(zpool);
+	q->down = zalloc(zpool);
+	return q;
+}
+
+QNode *
+qtnew(void)
+{
+	QNode *q;
+
+	q = emalloc(sizeof *q);
+	if(zpool == nil)
+		zpool = znew(sizeof *q);
 	return q;
 }

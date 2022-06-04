@@ -49,12 +49,10 @@ struct QNode{
 	QNode *up;
 	QNode *down;
 	void *aux;
-
-	QNode *prev;
-	QNode *next;
 };
 QNode*	qtmerge(QNode*);
 QNode*	qtsplit(QNode*);
+QNode*	qtnew(void);
 
 u32int	next32pow2(u32int);
 int	lsb64(uvlong);
@@ -106,6 +104,21 @@ void	realft(double*, int, int);
 char*	estrdup(char*);
 void*	erealloc(void*, ulong, ulong);
 void*	emalloc(ulong);
+
+typedef struct Zpool Zpool;
+typedef struct Znode Znode;
+struct Znode{
+	Znode *next;
+	Znode *prev;
+	void data[];
+};
+struct Zpool{
+	int elsize;
+	Znode;
+};
+void	zfree(Znode*, Zpool*);
+void*	zalloc(Zpool*);
+Zpool*	znew(int);
 
 #define MIN(a,b)	((a) <= (b) ? (a) : (b))
 #define MAX(a,b)	((a) >= (b) ? (a) : (b))
