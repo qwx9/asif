@@ -1,0 +1,28 @@
+</$objtype/mkfile
+BIN=$home/bin/$objtype/asif
+TARG=path
+HFILES=../../asif.h ../../path/path.h dat.h fns.h
+OFILES=\
+	../../path/a∗.$O\
+	../../path/grid.$O\
+	../../dprint.$O\
+	../../emalloc.$O\
+	../../pheap.$O\
+	../../vec.$O\
+	../../zalloc.$O\
+	client.$O\
+	drw.$O\
+	fs.$O\
+	map.$O\
+	path.$O\
+
+</sys/src/cmd/mkone
+
+CFLAGS=$CFLAGS -I../.. -I../../path
+%.$O:	%.c
+	$CC -o $target $CFLAGS $stem.c
+
+dicks:V:
+	mkdir -p $BIN
+install:V:	dicks
+CLEANFILES=$CLEANFILES $OFILES

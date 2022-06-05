@@ -1,0 +1,11 @@
+void	init(int, int);
+Node*	scrselect(Point);
+void	updatedrw(void);
+void	evloop(void);
+void	initfs(void);
+void	initmap(int, int);
+void	initdrw(void);
+void	resetdrw(void);
+Vertex	n2s(Node*);
+void	clearmap(void);
+int	setparm(int, int, int);

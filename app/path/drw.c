@@ -1,7 +1,8 @@
 #include <u.h>
 #include <libc.h>
 #include <draw.h>
-#include "../asif.h"
+#include "asif.h"
+#include "path.h"
 #include "dat.h"
 #include "fns.h"
 
@@ -46,9 +47,9 @@ scrselect(Point p)
 		return nil;
 	}
 	p = divpt(p, Nodesz);
-	p.x = MIN(p.x, mapwidth-1);
-	p.y = MIN(p.y, mapheight-1);
-	selected = map + p.y * mapwidth + p.x;
+	p.x = MIN(p.x, gridwidth-1);
+	p.y = MIN(p.y, gridheight-1);
+	selected = grid + p.y * gridwidth + p.x;
 	return selected;
 }
 
@@ -66,12 +67,12 @@ drawhud(void)
 	Node *n;
 
 	draw(screen, hudr, col[Cbg], nil, ZP);
-	sp = seprint(s, s+sizeof s, "map size: %d,%d", viewr.max.x-1, viewr.max.y-1);
+	sp = seprint(s, s+sizeof s, "grid size: %d,%d", viewr.max.x-1, viewr.max.y-1);
 	if((n = selected) != nil){
-		assert(n >= map && n < map + mapwidth * mapheight);
+		assert(n >= grid && n < grid + gridwidth * gridheight);
 		sp = seprint(sp, s+sizeof s, " selected: %P%s",
-			Pt((n-map) % mapwidth, (n-map) / mapwidth),
-			n->blocked ? ": blocked" : "");
+			Pt((n-grid) % gridwidth, (n-grid) / gridwidth),
+			isblocked(n) ? ": blocked" : "");
 	}
 	USED(sp);
 	string(screen, addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ)), col[Cfree], ZP, font, s);
@@ -84,8 +85,8 @@ drawnodes(void)
 	Rectangle r;
 	Image *c;
 
-	for(n=map; n<map+mapwidth*mapheight; n++){
-		if(n->blocked)
+	for(n=grid; n<grid+gridwidth*gridheight; n++){
+		if(isblocked(n))
 			c = col[Cblocked];
 		else if(n == start)
 			c = col[Cstart];
@@ -111,7 +112,7 @@ drawfrom(void)
 	Node *n;
 	Point p0, p1;
 
-	for(n=map; n<map+mapwidth*mapheight; n++){
+	for(n=grid; n<grid+gridwidth*gridheight; n++){
 		if(!n->open)
 			continue;
 		p1 = addpt(n2s(n), Pt(Nodesz / 2, Nodesz / 2));
@@ -119,8 +120,9 @@ drawfrom(void)
 		line(view, p0, p1, Endarrow, 0, 0, col[Cgrid], ZP);
 	}
 }
+
 static void
-drawmap(void)
+drawgrid(void)
 {
 	Rectangle r;
 
@@ -144,7 +146,7 @@ drawmap(void)
 static void
 redraw(void)
 {
-	drawmap();
+	drawgrid();
 }
 
 void
@@ -160,7 +162,7 @@ updatedrw(void)
 void
 resetdrw(void)
 {
-	viewr = Rpt(ZP, Pt(mapwidth*Nodesz+1, mapheight*Nodesz+1));
+	viewr = Rpt(ZP, Pt(gridwidth*Nodesz+1, gridheight*Nodesz+1));
 	viewΔ = divpt(addpt(subpt(ZP, subpt(screen->r.max, screen->r.min)), viewr.max), 2);
 	hudr.min = addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ));
 	hudr.max = addpt(hudr.min, Pt(viewr.max.x-2, font->height*3));
