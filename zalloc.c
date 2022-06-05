@@ -20,7 +20,7 @@ struct Znode{
 	void data[];
 };
 struct Ztail{
-	Zpool *z;
+	Zhouse *z;
 };
 struct Zhouse{
 	Zpool;
@@ -117,9 +117,9 @@ zfeed(Zhouse *z)
 	u = emalloc(Ninc * n);
 	for(v=u; v<u+Ninc*n; v+=n){
 		p = (Znode *)v;
+		p->z = z;
 		t = n2t(p);
-		p->z = z->z;
-		t->z = z->z;
+		t->z = z;
 		zlink(p, z);
 	}
 }
