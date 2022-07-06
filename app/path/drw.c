@@ -140,7 +140,8 @@ drawgrid(void)
 		r.min.y += Nodesz;
 	}
 	drawnodes();
-	drawfrom();
+	if(Nodesz > 8)
+		drawfrom();
 }
 
 static void

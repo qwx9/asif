@@ -108,7 +108,7 @@ threadmain(int argc, char **argv)
 		sysfatal("invalid map size, must be in ]0,512]");
 	keyfn = grkey;
 	mousefn = grmouse;
-	setparm(d, 0, m);
+	setparm(d, Pa∗, m);
 	init(w, h);
 	evloop();
 }
