@@ -17,9 +17,6 @@ void	vnuke(VArray*);
 void	vinsert(VArray*, char*);
 VArray*	valloc(ulong, int);
 
-enum{
-	Shardsz = 128,
-};
 typedef struct VShard VShard;
 typedef struct Vector Vector;
 struct VShard{

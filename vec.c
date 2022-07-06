@@ -2,6 +2,10 @@
 #include <libc.h>
 #include "asif.h"
 
+enum{
+	Shardsz = 2048,
+};
+
 static void
 shardlink(Vector *v, VShard *s)
 {

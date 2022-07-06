@@ -28,7 +28,7 @@ struct Zhouse{
 };
 
 enum{
-	Ninc = 128,
+	Ninc = 2048,
 };
 
 static Ztail *
