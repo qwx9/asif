@@ -1,7 +1,7 @@
-typedef struct Vertex Vertex;
 typedef struct State State;
 typedef struct PState PState;
 typedef struct Node Node;
+typedef struct Vertex Vertex;
 
 struct Vertex{
 	int x;
@@ -51,3 +51,5 @@ void	cleargrid(void);
 Node*	initgrid(int, int);
 
 int	a∗findpath(Node*, Node*);
+int	bfsfindpath(Node*, Node*);
+int	dijkstrafindpath(Node*, Node*);
