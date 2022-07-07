@@ -4,8 +4,6 @@
 #include "asif.h"
 #include "path.h"
 
-/* FIXME: assumes grid */
-
 typedef Vertex Point;
 
 typedef struct PNode PNode;
@@ -44,9 +42,7 @@ backtrack(Node *a, Node *b)
  * https://www.redbloblgames.com/pathfinding/a-star/implementation.html
  * one addition: make cost function to increase at a slower rate to
  * resolve tie-breakers in favor of closer nodes, otherwise we will
- * explore all nodes in the rectangle between the two points; does
- * NOT work with 4-way movement and manhattan distance for some reason */
- 	// FIXME: ^- reverify that it does not work
+ * explore all nodes in the rectangle between the two points */
 static double
 movecost(int Δx, int Δy)
 {

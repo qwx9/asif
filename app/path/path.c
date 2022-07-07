@@ -66,28 +66,55 @@ grkey(Rune r)
 static void
 usage(void)
 {
-	fprint(2, "usage: %s [-D4] [-s width[,height]]\n", argv0);
+	fprint(2, "usage: %s [-D4] [-a algo] [-d dist] [-s width[,height]]\n", argv0);
 	threadexits("usage");
 }
 
 void
 threadmain(int argc, char **argv)
 {
-	int w, h, d, m;
+	int w, h, a, d, m;
 	char *s;
 
 	w = 64;
 	h = 64;
-	d = Move8;
-	m = Doctile;
+	a = -1;
+	d = -1;
+	m = Move8;
 	ARGBEGIN{
 	case 'D':
 		if(++debuglevel >= Logparanoid)
 			mainmem->flags |= POOL_NOREUSE | POOL_PARANOIA | POOL_LOGGING;
 		break;
 	case '4':
-		d = Move4;
-		m = Dmanhattan;
+		m = Move4;
+		d = Dmanhattan;
+		break;
+	case 'a':
+		s = EARGF(usage());
+		if(strcmp(s, "a∗") == 0)
+			a = Pa∗;
+		else if(strcmp(s, "dijkstra") == 0)
+			a = Pdijkstra;
+		else if(strcmp(s, "bfs") == 0)
+			a = Pbfs;
+		else{
+			fprint(2, "unsupported algorithm\n");
+			usage();
+		}
+		break;
+	case 'd':
+		s = EARGF(usage());
+		if(strcmp(s, "octile") == 0)
+			d = Doctile;
+		else if(strcmp(s, "manhattan") == 0)
+			d = Dmanhattan;
+		else if(strcmp(s, "euclid") == 0)
+			d = Deuclid;
+		else{
+			fprint(2, "unsupported distance function\n");
+			usage();
+		}
 		break;
 	case 's':
 		w = strtol(EARGF(usage()), &s, 0);
@@ -108,7 +135,11 @@ threadmain(int argc, char **argv)
 		sysfatal("invalid map size, must be in ]0,512]");
 	keyfn = grkey;
 	mousefn = grmouse;
-	setparm(d, Pa∗, m);
+	if(d < 0)
+		d = m == Move8 ? Doctile : Dmanhattan;
+	if(a < 0)
+		a = Pa∗;
+	setparm(m, a, d);
 	init(w, h);
 	evloop();
 }

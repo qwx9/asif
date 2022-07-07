@@ -30,7 +30,7 @@ setparm(int mmode, int alg, int dist)
 	switch(alg){
 	case Pa∗: pathfn = a∗findpath; break;
 	case Pbfs: pathfn = bfsfindpath; break;
-	//case Pdijkstra: pathfn = dijkstrafindpath; break;
+	case Pdijkstra: pathfn = dijkstrafindpath; break;
 	default: sysfatal("setparm: unknown algo type %d", alg);
 	}
 	switch(dist){

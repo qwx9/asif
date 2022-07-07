@@ -13,8 +13,12 @@ typedef Node PNode;
 static PNode**	(*successorfn)(Node*);
 
 static void
-cleanup(void)
+backtrack(Node *a, Node *b)
 {
+	Node *n;
+
+	for(n=b; n!=a; n=n->from)
+		n->from->to = n;
 }
 
 static double
@@ -110,6 +114,9 @@ bfs(Node *a, Node *b)
 		}
 	}
 	vecfree(front);
+	if(u != b)
+		return -1;
+	backtrack(a, b);
 	return 0;
 }
 

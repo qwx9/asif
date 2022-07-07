@@ -166,7 +166,7 @@ resetdrw(void)
 	viewr = Rpt(ZP, Pt(gridwidth*Nodesz+1, gridheight*Nodesz+1));
 	viewΔ = divpt(addpt(subpt(ZP, subpt(screen->r.max, screen->r.min)), viewr.max), 2);
 	hudr.min = addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ));
-	hudr.max = addpt(hudr.min, Pt(viewr.max.x-2, font->height*3));
+	hudr.max = addpt(hudr.min, Pt(screen->r.max.x, font->height*3));
 	freeimage(view);
 	view = eallocimage(viewr, 0, DNofill);
 	draw(screen, screen->r, col[Cbg], nil, ZP);
