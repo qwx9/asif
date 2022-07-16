@@ -52,12 +52,13 @@ evloop(void)
 }
 
 void
-init(int w, int h)
+init(char *scen, Vertex v, int m, int a, int d)
 {
 	fmtinstall('P', Pfmt);
 	fmtinstall('R', Rfmt);
 	initfs();
-	initmap(w, h);
+	if(initmap(scen, v, m, a, d) < 0)
+		sysfatal("init: %r");
 	initdrw();
 	if((kc = initkeyboard(nil)) == nil)
 		sysfatal("initkeyboard: %r");

@@ -1,9 +1,10 @@
-void	init(int, int);
+void	init(char*, Vertex, int, int, int);
 Node*	scrselect(Point);
 void	updatedrw(void);
 void	evloop(void);
+int	readscen(char*, Vertex*, int*, int*, int*);
 void	initfs(void);
-void	initmap(int, int);
+int	initmap(char*, Vertex, int, int, int);
 void	initdrw(void);
 void	resetdrw(void);
 Vertex	n2s(Node*);

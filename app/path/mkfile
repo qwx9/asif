@@ -11,6 +11,7 @@ OFILES=\
 	../../emalloc.$O\
 	../../pheap.$O\
 	../../vec.$O\
+	../../varray.$O\
 	../../zalloc.$O\
 	client.$O\
 	drw.$O\

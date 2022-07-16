@@ -66,7 +66,7 @@ grkey(Rune r)
 static void
 usage(void)
 {
-	fprint(2, "usage: %s [-D4] [-a algo] [-d dist] [-s width[,height]]\n", argv0);
+	fprint(2, "usage: %s [-D4] [-a algo] [-d dist] [-s width[,height]] [-m scen]\n", argv0);
 	threadexits("usage");
 }
 
@@ -74,13 +74,14 @@ void
 threadmain(int argc, char **argv)
 {
 	int w, h, a, d, m;
-	char *s;
+	char *s, *scen;
 
 	w = 64;
 	h = 64;
 	a = -1;
 	d = -1;
 	m = Move8;
+	scen = nil;
 	ARGBEGIN{
 	case 'D':
 		if(++debuglevel >= Logparanoid)
@@ -116,6 +117,9 @@ threadmain(int argc, char **argv)
 			usage();
 		}
 		break;
+	case 'm':
+		scen = EARGF(usage());
+		break;
 	case 's':
 		w = strtol(EARGF(usage()), &s, 0);
 		if(w <= 0)
@@ -133,13 +137,12 @@ threadmain(int argc, char **argv)
 	if(w <= 0 || w > 512
 	|| h <= 0 || h > 512)
 		sysfatal("invalid map size, must be in ]0,512]");
-	keyfn = grkey;
-	mousefn = grmouse;
 	if(d < 0)
 		d = m == Move8 ? Doctile : Dmanhattan;
 	if(a < 0)
 		a = Pa∗;
-	setparm(m, a, d);
-	init(w, h);
+	keyfn = grkey;
+	mousefn = grmouse;
+	init(scen, (Vertex){w,h}, m, a, d);
 	evloop();
 }

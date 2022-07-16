@@ -8,6 +8,8 @@
 int movemode;
 int	(*pathfn)(Node*, Node*);
 
+static int gotscen;
+
 Vertex
 n2s(Node *n)
 {
@@ -46,14 +48,29 @@ setparm(int mmode, int alg, int dist)
 void
 clearmap(void)
 {
-	if(grid == nil)
+	start = goal = nil;
+	if(grid == nil || gotscen)
 		return;
 	cleargrid();
-	start = goal = nil;
 }
 
-void
-initmap(int w, int h)
+static void
+defaults(Vertex v)
 {
-	initgrid(w, h);
+	initgrid(v.x, v.y);
+	setparm(Move8, Pa∗, Doctile);
+}
+
+int
+initmap(char *scen, Vertex v, int m, int a, int d)
+{
+	if(scen == nil){
+		defaults(v);
+		return 0;
+	}
+	if(readscen(scen, &v, &m, &a, &d) < 0)
+		sysfatal("readscen: %r");
+	gotscen = 1;
+	setparm(m, a, d);
+	return 0;
 }
