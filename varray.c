@@ -3,7 +3,7 @@
 #include "asif.h"
 
 enum{
-	VAdefsize = 1024,
+	VAinc = 2048,
 };
 
 void
@@ -32,9 +32,9 @@ vinsert(VArray *v, char *u)
 	assert(v != nil && u != nil);
 	off = v->n * v->elsize;
 	if(v->n++ >= v->vsize){
-		v->p = erealloc(v->p, v->bufsize * 2, v->bufsize);
-		v->bufsize *= 2;
-		v->vsize *= 2;
+		v->p = erealloc(v->p, v->bufsize + VAinc * v->elsize, v->bufsize);
+		v->bufsize += VAinc * v->elsize;
+		v->vsize += VAinc;
 	}
 	memcpy((char*)v->p+off, u, v->elsize);
 }
@@ -48,8 +48,8 @@ valloc(ulong n, int elsize)
 	v->n = 0;
 	v->elsize = elsize;
 	if(n <= 0)
-		n = VAdefsize;
-	v->vsize = MIN(n, VAdefsize);
+		n = VAinc;
+	v->vsize = MIN(n, VAinc);
 	v->bufsize = v->vsize * elsize;
 	v->p = emalloc(v->bufsize);
 	return v;
