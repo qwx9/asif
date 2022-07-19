@@ -2,9 +2,11 @@
 #include <libc.h>
 #include "asif.h"
 
-/* no nodes are ever freed, left to be reclaimed by the kernel on exit
- * got more complicated, but should be able to detect some bugs...
- * unsuitable for very large collections probably */
+/* "simple" "slab allocation" free lists: no memory is ever freed, left to be
+ * reclaimed by the kernel on exit; should be able to detect some bugs, but
+ * still convoluted. keeps track of used nodes to be able to reap them all at
+ * once.
+ */
 
 typedef struct Zhouse Zhouse;
 typedef struct Znode Znode;
@@ -24,6 +26,7 @@ struct Ztail{
 };
 struct Zhouse{
 	Zpool;
+	Znode used;
 	Znode;
 };
 
@@ -58,13 +61,32 @@ zcheckpool(Znode *p, Zhouse *z)
 }
 
 static void
-zlink(Znode *p, Zhouse *z)
+zlink(Znode *p, Znode *l, int clr)
 {
-	zcheckpool(p, z);
-	p->prev = z->prev;
-	p->next = &z->Znode;
-	z->prev->next = p;
-	z->prev = p;
+	if(clr){
+		p->next->prev = p->prev;
+		p->prev->next = p->next;
+	}
+	p->prev = l->prev;
+	p->next = l;
+	l->prev->next = p;
+	l->prev = p;
+}
+
+void
+znuke(Zpool *zp)
+{
+	Zhouse *z;
+
+	if(zp == nil)
+		return;
+	z = (Zhouse *)zp;
+	/* prev → z → NEXT → … → PREV → next; contents must be zeroed */
+	z->used.prev->next = z->next;
+	z->next->prev = z->used.prev;
+	z->next = z->used.next;
+	z->used.next->prev = &z->Znode;
+	z->used.next = z->used.prev = &z->used;
 }
 
 static Znode *
@@ -74,10 +96,7 @@ zpop(Zhouse *z)
 
 	p = z->next;
 	assert(p != z);
-	zcheckpool(p, z);
-	p->next->prev = &z->Znode;
-	z->next = p->next;
-	p->prev = p->next = nil;
+	zlink(p, &z->used, 1);
 	return p;
 }
 
@@ -91,7 +110,7 @@ _zfree(Znode *p)
 	z = p->z;
 	zcheckpool(p, z);
 	memset(p->data, 0, z->elsize);
-	zlink(p, z);
+	zlink(p, &z->Znode, 1);
 }
 
 void
@@ -120,7 +139,7 @@ zfeed(Zhouse *z)
 		p->z = z;
 		t = n2t(p);
 		t->z = z;
-		zlink(p, z);
+		zlink(p, &z->Znode, 0);
 	}
 }
 
@@ -133,6 +152,7 @@ zalloc(Zpool *zp)
 	z = (Zhouse *)zp;
 	zfeed(z);
 	p = zpop(z);
+	memset(p->data, 0, z->elsize);
 	return p->data;
 }
 
@@ -145,6 +165,7 @@ znew(usize elsize)
 	z = emalloc(sizeof *z);
 	z->elsize = elsize;
 	z->next = z->prev = z;
+	z->used.next = z->used.prev = &z->used;
 	zfeed(z);
 	return z;
 }

@@ -107,6 +107,7 @@ struct Zpool{
 	usize elsize;
 	void data[];
 };
+void	znuke(Zpool*);
 void	zfree(void*);
 void*	zalloc(Zpool*);
 Zpool*	znew(usize);
