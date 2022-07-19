@@ -119,6 +119,7 @@ threadmain(int argc, char **argv)
 		break;
 	case 'm':
 		scen = EARGF(usage());
+		doprof = 1;
 		break;
 	case 's':
 		w = strtol(EARGF(usage()), &s, 0);
@@ -144,5 +145,9 @@ threadmain(int argc, char **argv)
 	keyfn = grkey;
 	mousefn = grmouse;
 	init(scen, (Vertex){w,h}, m, a, d);
-	evloop();
+	if(doprof)
+		runscens();
+	else
+		evloop();
+	threadexitsall(nil);
 }

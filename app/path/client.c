@@ -56,9 +56,13 @@ init(char *scen, Vertex v, int m, int a, int d)
 {
 	fmtinstall('P', Pfmt);
 	fmtinstall('R', Rfmt);
+	fmtinstall('V', Vfmt);
+	fmtinstall('N', Nfmt);
 	initfs();
 	if(initmap(scen, v, m, a, d) < 0)
 		sysfatal("init: %r");
+	if(doprof)
+		return;
 	initdrw();
 	if((kc = initkeyboard(nil)) == nil)
 		sysfatal("initkeyboard: %r");

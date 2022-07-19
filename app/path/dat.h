@@ -9,5 +9,4 @@ enum{
 	Pdijkstra,
 	Pa∗,
 };
-
 extern int	(*pathfn)(Node*, Node*);

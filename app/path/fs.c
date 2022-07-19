@@ -9,11 +9,35 @@
 /* https://bitbucket.org/dharabor/pathfinding/src/gppc/gppc-2014/scenarios/ */
 typedef struct Sim Sim;
 struct Sim{
+	Prof;
 	Vertex start;
 	Vertex goal;
 	double dist;
 };
 static VArray *sims;
+
+void
+runscens(void)
+{
+	Sim *sp, *se;
+
+	sp = sims->p;
+	se = sp + sims->n;
+	fprint(2, "id\tsteps\ttouched\texpanded\tupdated\topened\n");
+	while(sp < se){
+		start = p2n(sp->start);
+		goal = p2n(sp->goal);
+		if(pathfn(start, goal) < 0)
+			fprint(2, "runscens: findpath from %N to %N: %r\n",
+				start, goal);
+		memcpy(sp, &stats, sizeof stats);
+		fprint(2, "%zd\t%d\t%d\t%d\t%d\t%d\n",
+			sp - (Sim*)sims->p,
+			stats.steps, stats.touched, stats.opened,
+			stats.updated, stats.closed);
+		sp++;
+	}
+}
 
 static int
 readscenmaphdr(Biobuf *bf, Vertex *v)
@@ -65,7 +89,7 @@ readscenmap(char *path, Vertex *v)
 		for(t=s, u.x=0; (c=*t)!=0; t++, u.x++){
 			switch(c){
 			case 'S':
-			case 'W': 
+			case 'W':
 			case 'T':
 			case '@':
 			case 'O':
