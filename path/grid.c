@@ -7,6 +7,9 @@ Node *grid;
 int gridwidth, gridheight;
 double	(*distfn)(Node*, Node*);
 
+int doprof;
+Prof stats;
+
 double
 eucdist(Node *a, Node *b)
 {
@@ -58,6 +61,7 @@ clearpath(void)
 		return;
 	for(n=grid; n<grid+gridwidth*gridheight; n++)
 		memset(&n->PState, 0, sizeof n->PState);
+	memset(&stats, 0, sizeof stats);
 }
 
 void
@@ -81,6 +85,26 @@ Vertex
 n2p(Node *n)
 {
 	return (Vertex){(n - grid) % gridwidth, (n - grid) / gridheight};
+}
+
+int
+Vfmt(Fmt *f)
+{
+	Vertex v;
+
+	v = va_arg(f->args, Vertex);
+	return fmtprint(f, "[%d %d]", v.x, v.y);
+}
+
+int
+Nfmt(Fmt *f)
+{
+	Node *n;
+	Vertex v;
+
+	n = va_arg(f->args, Node*);
+	v = n2p(n);
+	return fmtprint(f, "[%#p %V]", n, v);
 }
 
 Node *

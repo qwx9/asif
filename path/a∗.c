@@ -19,23 +19,18 @@ static PNode**	(*successorfn)(Node*);
 static Zpool *zpool;
 
 static void
-cleanup(Pairheap **queue)
-{
-	Pairheap *p;
-
-	while((p = popqueue(queue)) != nil){
-		zfree(p->aux);
-		free(p);
-	}
-}
-
-static void
 backtrack(Node *a, Node *b)
 {
-	Node *n;
+	Node *u, *v;
+	PNode *p;
 
-	for(n=b; n!=a; n=n->from)
-		n->from->to = n;
+	for(u=b; u!=a; u=v){
+		p = u->aux;
+		stats.cost += p->g;
+		stats.steps++;
+		v = u->from;
+		v->to = u;
+	}
 }
 
 /* slightly penalize diagonal movement for nicer-looking paths; cf.:
@@ -73,8 +68,10 @@ successors8(Node *nu)
 		assert(nv >= grid && nv < grid + gridwidth * gridheight);
 		if(isblocked(nv))
 			continue;
-		v = zalloc(zpool);
-		v->n = nv;
+		if((v = nv->aux) == nil){
+			v = nv->aux = zalloc(zpool);
+			v->n = nv;
+		}
 		v->Δg = movecost(dtab[i], dtab[i+1]);
 		*vp++ = v;
 	}
@@ -109,8 +106,10 @@ successors4(Node *nu)
 		assert(nv >= grid && nv < grid + gridwidth * gridheight);
 		if(isblocked(nv))
 			continue;
-		v = zalloc(zpool);
-		v->n = nv;
+		if((v = nv->aux) == nil){
+			v = nv->aux = zalloc(zpool);
+			v->n = nv;
+		}
 		v->Δg = movecost(t[i], t[i+1]);
 		*vp++ = v;
 	}
@@ -126,9 +125,8 @@ a∗(Node *a, Node *b)
 	Pairheap *queue, *pn;
 
 	queue = nil;
-	nu = a;
-	u = zalloc(zpool);
-	u->n = a;
+	u = a->aux = zalloc(zpool);
+	nu = u->n = a;
 	u->pq = pushqueue(distfn(a, b), u, &queue);
 	while((pn = popqueue(&queue)) != nil){
 		u = pn->aux;
@@ -137,12 +135,14 @@ a∗(Node *a, Node *b)
 		if(nu == b)
 			break;
 		nu->closed = 1;
+		stats.closed++;
 		dprint(Logtrace, "a∗: closed [%#p,%P] h %.4f g %.4f\n",
 			u, n2p(nu), u->h, u->g);
 		if((vl = successorfn(nu)) == nil)
 			sysfatal("a∗: %r");
 		for(v=*vl++; v!=nil; v=*vl++){
 			nv = v->n;
+			stats.touched++;
 			if(nv->closed)
 				continue;
 			g = u->g + v->Δg;
@@ -150,12 +150,14 @@ a∗(Node *a, Node *b)
 			if(!nv->open){
 				nv->from = nu;
 				nv->open = 1;
+				stats.opened++;
 				v->h = distfn(nv, b);
 				v->g = g;
 				dprint(Logtrace, "a∗: opened [%#p,%P] h %.4f g %.4f f %.4f\n",
 					v, n2p(nv), v->h, v->g, v->h + v->g);
 				v->pq = pushqueue(v->g + v->h, v, &queue);
 			}else if(Δg > 0){
+				stats.updated++;
 				dprint(Logtrace, "a∗: decrease [%#p,%P] h %.4f g %.4f Δg %.4f → f %.4f\n",
 					v, n2p(nv), v->h, v->g, Δg, v->h + v->g - Δg);
 				nv->from = u->n;
@@ -165,16 +167,17 @@ a∗(Node *a, Node *b)
 			}
 		}
 	}
-	cleanup(&queue);
+	nukequeue(&queue);
 	if(nu != b)
 		return -1;
-	backtrack(a, b);
 	return 0;
 }
 
 int
 a∗findpath(Node *a, Node *b)
 {
+	int r;
+
 	assert(a != nil && b != nil && a != b);
 	clearpath();
 	if(zpool == nil)
@@ -182,9 +185,10 @@ a∗findpath(Node *a, Node *b)
 	successorfn = movemode == Move8 ? successors8 : successors4;
 	dprint(Logdebug, "grid::a∗findpath: a∗ from [%#p,%P] to [%#p,%P]\n",
 		a, n2p(a), b, n2p(b));
-	if(a∗(a, b) < 0){
+	if((r = a∗(a, b)) < 0)
 		dprint(Logdebug, "grid::a∗findpath: failed to find a path\n");
-		return -1;
-	}
-	return 0;
+	else
+		backtrack(a, b);
+	znuke(zpool);
+	return r;
 }
