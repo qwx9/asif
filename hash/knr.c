@@ -12,7 +12,7 @@ hash(char *s)
 
 	for(h=0, c=*s++; c!=0; c=*s++)
 		h = c + 31 * h;
-	return h;
+	return h % Hashsz;
 }
 
 void *
