@@ -28,18 +28,24 @@ cleanup(Pairheap **queue)
 	Pairheap *p;
 
 	while((p = popqueue(queue)) != nil){
-		zfree(p->aux);
+		memset(p, 0, sizeof *p);
 		free(p);
 	}
+	znuke(zpool);
 }
 
 static void
 backtrack(Node *a, Node *b)
 {
 	Node *n;
+	PNode *p;
 
-	for(n=b; n!=a; n=n->from)
+	for(n=b; n!=a; n=n->from){
+		p = n->aux;
+		stats.cost += p->g;
+		stats.steps++;
 		n->from->to = n;
+	}
 }
 
 /* slightly penalize diagonal movement for nicer-looking paths; cf.:
@@ -77,8 +83,10 @@ successors8(Node *nu)
 		assert(nv >= grid && nv < grid + gridwidth * gridheight);
 		if(isblocked(nv))
 			continue;
-		v = zalloc(zpool);
-		v->n = nv;
+		if((v = nv->aux) == nil){
+			v = nv->aux = zalloc(zpool);
+			v->n = nv;
+		}
 		v->Δg = movecost(dtab[i], dtab[i+1]);
 		*vp++ = v;
 	}
@@ -113,8 +121,10 @@ successors4(Node *nu)
 		assert(nv >= grid && nv < grid + gridwidth * gridheight);
 		if(isblocked(nv))
 			continue;
-		v = zalloc(zpool);
-		v->n = nv;
+		if((v = nv->aux) == nil){
+			v = nv->aux = zalloc(zpool);
+			v->n = nv;
+		}
 		v->Δg = movecost(t[i], t[i+1]);
 		*vp++ = v;
 	}
@@ -141,25 +151,28 @@ dijkstra(Node *a, Node *b)
 		if(nu == b)
 			break;
 		nu->closed = 1;
+		stats.closed++;
 		dprint(Logtrace, "dijkstra: closed [%#p,%P] g %.4f\n",
 			u, n2p(nu), u->g);
 		if((vl = successorfn(nu)) == nil)
 			sysfatal("a∗: %r");
 		for(v=*vl++; v!=nil; v=*vl++){
 			nv = v->n;
+			stats.touched++;
 			if(nv->closed)
 				continue;
 			g = u->g + v->Δg;
 			Δg = v->g - g;
+			assert(floor(Δg) <= 0.0);
 			if(!nv->open){
 				nv->from = nu;
 				nv->open = 1;
+				stats.opened++;
 				v->g = g;
 				dprint(Logtrace, "dijkstra: opened [%#p,%P] g %.4f\n",
 					v, n2p(nv), v->g);
 				v->pq = pushqueue(v->g, v, &queue);
 			}
-			assert(Δg <= 0);
 		}
 	}
 	cleanup(&queue);
