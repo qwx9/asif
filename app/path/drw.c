@@ -117,7 +117,8 @@ drawfrom(void)
 			continue;
 		p1 = addpt(n2s(n), Pt(Nodesz / 2, Nodesz / 2));
 		p0 = addpt(n2s(n->from), Pt(Nodesz / 2, Nodesz / 2));
-		line(view, p0, p1, Endarrow, 0, 0, col[Cgrid], ZP);
+		//line(view, p0, p1, Endarrow, 0, 0, col[Cgrid], ZP);
+		line(view, p0, p1, 0, 0, 0, col[Cgrid], ZP);
 	}
 }
 

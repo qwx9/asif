@@ -53,12 +53,41 @@ grmouse(Mouse m)
 }
 
 static int
+setscen(void)
+{
+	int n;
+	char buf[128];
+
+	snprint(buf, sizeof buf, "%d", scenid);
+	if(menter("Scenario id?", buf, sizeof buf) < 0){
+		fprint(2, "getscen: %r\n");
+		return -1;
+	}
+	if((n = strtol(buf, nil, 10)) < 0 || n > nscen){
+		fprint(2, "getscen: invalid id %s\n", buf);
+		return -1;
+	}
+	scenid = n;
+	showscen(n);
+	return 0;
+}
+
+static int
 grkey(Rune r)
 {
 	switch(r){
 	case Kdel:
 	case 'q': threadexitsall(nil);
-	case 'r': cleargrid(); updatedrw(); break;
+	case 'r':
+		if(doprof){
+			reloadscen();
+			showscen(scenid);
+		}else
+			cleargrid();
+		updatedrw();
+		break;
+	case ' ':
+	case '\n': if(setscen() >= 0) updatedrw(); break;
 	}
 	return 0;
 }
@@ -74,14 +103,15 @@ void
 threadmain(int argc, char **argv)
 {
 	int w, h, a, d, m;
-	char *s, *scen;
+	char *s, *scenres, *scenmap;
 
 	w = 64;
 	h = 64;
 	a = -1;
 	d = -1;
 	m = Move8;
-	scen = nil;
+	scenmap = nil;
+	scenres = nil;
 	ARGBEGIN{
 	case 'D':
 		if(++debuglevel >= Logparanoid)
@@ -118,8 +148,11 @@ threadmain(int argc, char **argv)
 		}
 		break;
 	case 'm':
-		scen = EARGF(usage());
+		scenmap = EARGF(usage());
 		doprof = 1;
+		break;
+	case 'r':
+		scenres = EARGF(usage());
 		break;
 	case 's':
 		w = strtol(EARGF(usage()), &s, 0);
@@ -144,10 +177,9 @@ threadmain(int argc, char **argv)
 		a = Pa∗;
 	keyfn = grkey;
 	mousefn = grmouse;
-	init(scen, (Vertex){w,h}, m, a, d);
-	if(doprof)
+	init(scenmap, scenres, (Vertex){w,h}, m, a, d);
+	if(doprof && scenres == nil)
 		runscens();
-	else
-		evloop();
+	evloop();
 	threadexitsall(nil);
 }

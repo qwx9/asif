@@ -1,5 +1,5 @@
 enum{
-	Nodesz = 4,
+	Nodesz = 2,
 };
 extern Node *selected;
 extern Node *start, *goal;
@@ -10,3 +10,5 @@ enum{
 	Pa∗,
 };
 extern int	(*pathfn)(Node*, Node*);
+
+extern int nscen, scenid;

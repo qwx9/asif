@@ -16,6 +16,14 @@ int	(*keyfn)(Rune);
 static Keyboardctl *kc;
 static Mousectl *mc;
 
+int
+menter(char *label, char *buf, int bufsz)
+{
+	if(enter(label, buf, bufsz, mc, kc, nil) < 0)
+		return -1;
+	return 0;
+}
+
 void
 evloop(void)
 {
@@ -52,17 +60,15 @@ evloop(void)
 }
 
 void
-init(char *scen, Vertex v, int m, int a, int d)
+init(char *scen, char *res, Vertex v, int m, int a, int d)
 {
 	fmtinstall('P', Pfmt);
 	fmtinstall('R', Rfmt);
 	fmtinstall('V', Vfmt);
 	fmtinstall('N', Nfmt);
 	initfs();
-	if(initmap(scen, v, m, a, d) < 0)
+	if(initmap(scen, res, v, m, a, d) < 0)
 		sysfatal("init: %r");
-	if(doprof)
-		return;
 	initdrw();
 	if((kc = initkeyboard(nil)) == nil)
 		sysfatal("initkeyboard: %r");

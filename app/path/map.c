@@ -52,23 +52,13 @@ clearmap(void)
 	cleargrid();
 }
 
-static void
-defaults(Vertex v)
-{
-	initgrid(v.x, v.y);
-	setparm(Move8, Pa∗, Doctile);
-}
-
 int
-initmap(char *scen, Vertex v, int m, int a, int d)
+initmap(char *scen, char *res, Vertex v, int m, int a, int d)
 {
-	if(scen == nil){
-		defaults(v);
-		return 0;
-	}
-	if(readscen(scen, &v, &m, &a, &d) < 0)
-		sysfatal("readscen: %r");
-	doprof = 1;
 	setparm(m, a, d);
+	if(scen == nil)
+		initgrid(v.x, v.y);
+	else if(readscen(scen, res, &v, &m, &a, &d) < 0)
+		sysfatal("readscen: %r");
 	return 0;
 }
