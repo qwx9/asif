@@ -15,35 +15,97 @@ hash(char *s)
 	return h % Hashsz;
 }
 
+static HPair *
+find(HTab *ht, char *key, HPair **prev)
+{
+	HPair *k, *kp;
+
+	if(ht == nil)
+		return nil;
+	kp = &ht->b[hash(key)];
+	if(prev != nil)
+		*prev = kp;
+	for(k=kp->next; k!=nil; kp=k, k=k->next){
+		if(prev != nil)
+			*prev = kp;
+		if(strcmp(key, k->key) == 0)
+			return k;
+	}
+	return nil;
+}
+
+static char *
+bytestr(u32int key)
+{
+	static char u[5];
+
+	u[0] = key;
+	u[1] = key >> 8;
+	u[2] = key >> 16;
+	u[3] = key >> 24;
+	u[4] = 0;
+	return u;
+}
+
+int
+htremove(HTab *ht, char *key)
+{
+	HPair *k, *kp;
+
+	if((k = find(ht, key, &kp)) == nil){
+		werrstr("no such key \"%s\"", key);
+		return -1;
+	}
+	kp->next = k->next;
+	free(k->key);
+	free(k);
+	return 0;
+}
+
+int
+htremovel(HTab *ht, u32int key)
+{
+	return htremove(ht, bytestr(key));
+}
+
 void *
 htget(HTab *ht, char *key)
 {
 	HPair *k;
 
-	if(ht == nil)
+	if((k = find(ht, key, nil)) == nil){
+		werrstr("no such key \"%s\"", key);
 		return nil;
-	for(k=ht->b[hash(key)].next; k!=nil; k=k->next)
-		if(strcmp(key, k->key) == 0)
-			return k->val;
-	return nil;
+	}
+	return k->val;
 }
 
-void
+void *
+htgetl(HTab *ht, u32int key)
+{
+	return htget(ht, bytestr(key));
+}
+
+int
 htput(HTab *ht, char *key, void *val)
 {
 	HPair *kp, *k;
 
-	if(ht == nil)
-		return;
-	for(kp=&ht->b[hash(key)], k=kp->next; k!=nil; kp=k, k=k->next)
-		if(strcmp(key, k->key) == 0){
-			k->val = val;
-			return;
-		}
+	if((k = find(ht, key, &kp)) != nil){
+		k->val = val;
+		return 0;
+	}
 	k = emalloc(sizeof *k);
 	k->key = estrdup(key);
 	k->val = val;
 	kp->next = k;
+	return 0;
+}
+
+int
+htputl(HTab *ht, u32int key, void *val)
+{
+	return htput(ht, bytestr(key), val);
 }
 
 HTab *

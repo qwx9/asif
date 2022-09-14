@@ -77,8 +77,12 @@ struct HTab{
 	HPair b[Hashsz];
 };
 
+int	htremovel(HTab*, u32int);
+void*	htgetl(HTab*, u32int);
+int	htputl(HTab*, u32int, void*);
+int	htremove(HTab*, char*);
 void*	htget(HTab*, char*);
-void	htput(HTab*, char*, void*);
+int	htput(HTab*, char*, void*);
 HTab*	htalloc(void);
 
 typedef struct Pairheap Pairheap;
