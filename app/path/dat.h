@@ -1,6 +1,3 @@
-enum{
-	Nodesz = 2,
-};
 extern Node *selected;
 extern Node *start, *goal;
 
@@ -12,3 +9,6 @@ enum{
 extern int	(*pathfn)(Node*, Node*);
 
 extern int nscen, scenid;
+
+extern int nodesz;
+extern int showgrid;

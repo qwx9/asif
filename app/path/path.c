@@ -17,6 +17,8 @@ mainstacksize = 512*1024;
 
 Node *start, *goal;
 
+static setgoalmode;
+
 static int
 grmouse(Mouse m)
 {
@@ -31,16 +33,19 @@ grmouse(Mouse m)
 		return 0;
 	switch(m.buttons & 7){
 	case 1:
-		if(goal != n && !isblocked(n))
-			start = n;
-		break;
-	case 2:
-		if(start != n && !isblocked(n))
-			goal = n;
-		break;
-	case 4:
 		if(old == nil || isblocked(n) ^ isblocked(old))
 			toggleblocked(n);
+		break;
+	case 2:
+		break;
+	case 4:
+		if(setgoalmode){
+			if(start != n && !isblocked(n))
+				goal = n;
+		}else{
+			if(goal != n && !isblocked(n))
+				start = n;
+		}
 		break;
 	}
 	old = n;
@@ -77,17 +82,44 @@ grkey(Rune r)
 {
 	switch(r){
 	case Kdel:
-	case 'q': threadexitsall(nil);
+	case 'q':
+		threadexitsall(nil);
 	case 'r':
 		if(doprof){
 			reloadscen();
 			showscen(scenid);
 		}else
 			cleargrid();
-		updatedrw();
+		updatedrw(0);
 		break;
 	case ' ':
-	case '\n': if(setscen() >= 0) updatedrw(); break;
+	case '\n':
+		setgoalmode ^= 1;
+		break;
+	case 'g':
+		showgrid ^= 1;
+		updatedrw(0);
+		break;
+	case '0': case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7': case '8': case '9':
+		if(!doprof)
+			break;
+		if(setscen() >= 0)
+			updatedrw(0);
+		break;
+	case '+':
+	case '=':
+		if(nodesz < 1<<16){
+			nodesz <<= 1;
+			resetdrw();
+		}
+		break;
+	case '-':
+		if(nodesz > 1){
+			nodesz >>= 1;
+			resetdrw();
+		}
+		break;
 	}
 	return 0;
 }
@@ -149,7 +181,6 @@ threadmain(int argc, char **argv)
 		break;
 	case 'm':
 		scenmap = EARGF(usage());
-		doprof = 1;
 		break;
 	case 'r':
 		scenres = EARGF(usage());

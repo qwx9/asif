@@ -50,7 +50,7 @@ evloop(void)
 			break;
 		case Amouse:
 			if(mousefn(mc->Mouse))
-				updatedrw();
+				updatedrw(0);
 			break;
 		case Akbd:
 			keyfn(r);

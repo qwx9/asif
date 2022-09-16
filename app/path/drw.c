@@ -8,6 +8,8 @@
 
 QLock drawlock;
 Node *selected;
+int showgrid;
+int nodesz = 1;
 
 typedef Vertex Point;
 
@@ -46,7 +48,7 @@ scrselect(Point p)
 		selected = nil;
 		return nil;
 	}
-	p = divpt(p, Nodesz);
+	p = divpt(p, nodesz);
 	p.x = MIN(p.x, gridwidth-1);
 	p.y = MIN(p.y, gridheight-1);
 	selected = grid + p.y * gridwidth + p.x;
@@ -81,10 +83,12 @@ drawhud(void)
 static void
 drawnodes(void)
 {
+	int sz;
 	Node *n;
 	Rectangle r;
 	Image *c;
 
+	sz = MAX(nodesz - showgrid, 1);
 	for(n=grid; n<grid+gridwidth*gridheight; n++){
 		if(isblocked(n))
 			c = col[Cblocked];
@@ -101,7 +105,7 @@ drawnodes(void)
 		else
 			continue;
 		r.min = n2s(n);
-		r.max = addpt(r.min, Pt(Nodesz-1, Nodesz-1));
+		r.max = addpt(r.min, Pt(sz, sz));
 		draw(view, r, c, nil, ZP);
 	}
 }
@@ -115,8 +119,8 @@ drawfrom(void)
 	for(n=grid; n<grid+gridwidth*gridheight; n++){
 		if(!n->open)
 			continue;
-		p1 = addpt(n2s(n), Pt(Nodesz / 2, Nodesz / 2));
-		p0 = addpt(n2s(n->from), Pt(Nodesz / 2, Nodesz / 2));
+		p1 = addpt(n2s(n), Pt(nodesz / 2, nodesz / 2));
+		p0 = addpt(n2s(n->from), Pt(nodesz / 2, nodesz / 2));
 		//line(view, p0, p1, Endarrow, 0, 0, col[Cgrid], ZP);
 		line(view, p0, p1, 0, 0, 0, col[Cgrid], ZP);
 	}
@@ -127,35 +131,38 @@ drawgrid(void)
 {
 	Rectangle r;
 
-	draw(view, view->r, col[Cfree], nil, ZP);
 	r = viewr;
 	while(r.min.x < viewr.max.x){
 		r.max.x = r.min.x;
 		line(view, r.min, r.max, 0, 0, 0, col[Cgrid], ZP);
-		r.min.x += Nodesz;
+		r.min.x += nodesz;
 	}
 	r = viewr;
 	while(r.min.y < viewr.max.y){
 		r.max.y = r.min.y;
 		line(view, r.min, r.max, 0, 0, 0, col[Cgrid], ZP);
-		r.min.y += Nodesz;
+		r.min.y += nodesz;
 	}
-	drawnodes();
-	if(Nodesz > 8)
-		drawfrom();
 }
 
 static void
-redraw(void)
+redraw(int clear)
 {
-	drawgrid();
+	if(clear)
+		draw(screen, screen->r, col[Cbg], nil, ZP);
+	draw(view, view->r, col[Cfree], nil, ZP);
+	if(showgrid && nodesz > 1)
+		drawgrid();
+	drawnodes();
+	if(nodesz > 8)
+		drawfrom();
 }
 
 void
-updatedrw(void)
+updatedrw(int clear)
 {
 	qlock(&drawlock);
-	redraw();
+	redraw(clear);
 	qunlock(&drawlock);
 	drawhud();
 	flushdrw();
@@ -164,19 +171,20 @@ updatedrw(void)
 void
 resetdrw(void)
 {
-	viewr = Rpt(ZP, Pt(gridwidth*Nodesz+1, gridheight*Nodesz+1));
+	viewr = Rpt(ZP, Pt(gridwidth*nodesz+1, gridheight*nodesz+1));
 	viewΔ = divpt(addpt(subpt(ZP, subpt(screen->r.max, screen->r.min)), viewr.max), 2);
 	hudr.min = addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ));
 	hudr.max = addpt(hudr.min, Pt(screen->r.max.x, font->height*3));
 	freeimage(view);
 	view = eallocimage(viewr, 0, DNofill);
-	draw(screen, screen->r, col[Cbg], nil, ZP);
-	updatedrw();
+	updatedrw(1);
 }
 
 void
 initdrw(void)
 {
+	int z, zx, zy;
+
 	if(initdraw(nil, nil, "path") < 0)
 		sysfatal("initdraw: %r");
 	col[Cbg] = display->black;
@@ -188,5 +196,9 @@ initdrw(void)
 	col[Cpath] = eallocimage(Rect(0,0,1,1), 1, 0xcccc00ff);
 	col[Cstart] = eallocimage(Rect(0,0,1,1), 1, 0x00cc00ff);
 	col[Cgoal] = eallocimage(Rect(0,0,1,1), 1, 0xcc0000ff);
+	zx = Dx(screen->r) / gridwidth;
+	zy = Dy(screen->r) / gridheight;
+	z = MIN(zx, zy);
+	nodesz = z <= 1 ? 1 : z > 2 ? z & ~1 : z;
 	resetdrw();
 }

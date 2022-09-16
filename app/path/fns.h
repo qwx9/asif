@@ -1,6 +1,6 @@
 void	init(char*, char*, Vertex, int, int, int);
 Node*	scrselect(Point);
-void	updatedrw(void);
+void	updatedrw(int);
 int	menter(char*, char*, int);
 void	evloop(void);
 void	showscen(int);

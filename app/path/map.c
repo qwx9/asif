@@ -14,8 +14,8 @@ n2s(Node *n)
 	Vertex v;
 
 	v = n2p(n);
-	v.x = v.x * Nodesz + 1;
-	v.y = v.y * Nodesz + 1;
+	v.x = v.x * nodesz + 1;
+	v.y = v.y * nodesz + 1;
 	return v;
 }
 
