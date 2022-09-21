@@ -208,7 +208,7 @@ readscen(char *path, char *respath, Vertex *v, int *m, int *a, int *d)
 		return 0;
 	doprof = 1;
 	/* only supported benchmarking configurations so far */
-	if(*d != Doctile || *a != Pa∗ && *a != Pdijkstra || *m != Move8)
+	if(*a != Pa∗ && *a != Pdijkstra)
 		sysfatal("unimplemented profiling for parameter set");
 	if((s = strrchr(path, '.')) == nil){
 		werrstr("invalid path name");
