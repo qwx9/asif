@@ -1,4 +1,3 @@
-#!/bin/awk -f
 # 1988, aho, kernighan and weinberger: the awk programming language, pp 153-174
 
 function swap(X, a, b,    t)

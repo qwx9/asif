@@ -1,4 +1,3 @@
-#!/bin/awk -f
 # assumption: no missing values/indices in input data
 
 function swap(X, a, b,    t)

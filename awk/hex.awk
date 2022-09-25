@@ -1,4 +1,3 @@
-#!/bin/awk -f
 function hex(s, v){
 	if(s ~ /^0x/)
 		s = substr(s, 3)
