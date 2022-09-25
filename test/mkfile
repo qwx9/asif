@@ -1,0 +1,23 @@
+</$objtype/mkfile
+BIN=.
+TARG=\
+	pheap.dec\
+
+HFILES=../asif.h
+OFILES=\
+	../dprint.$O\
+	../emalloc.$O\
+	../pheap.$O\
+	../vec.$O\
+	../varray.$O\
+	../zalloc.$O\
+
+</sys/src/cmd/mkmany
+
+#LDFLAGS=$LDFLAGS -p
+CFLAGS=$CFLAGS -I..
+%.$O:	%.c
+	$CC -o $target $CFLAGS $stem.c
+
+$O.%: %.$O $OFILES
+	$LD -o $target $LDFLAGS $prereq
