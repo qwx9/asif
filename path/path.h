@@ -1,13 +1,8 @@
 typedef struct State State;
 typedef struct PState PState;
 typedef struct Node Node;
-typedef struct Vertex Vertex;
 typedef struct Prof Prof;
 
-struct Vertex{
-	int x;
-	int y;
-};
 struct PState{
 	int open;
 	int closed;
@@ -45,12 +40,27 @@ enum{
 };
 extern int movemode;
 
+enum{
+	θ∅ = 0,
+	θ→ = 1<<0,
+	θ↘ = 1<<1,
+	θ↓ = 1<<2,
+	θ↙ = 1<<3,
+	θ← = 1<<4,
+	θ↖ = 1<<5,
+	θ↑ = 1<<6,
+	θ↗ = 1<<7,
+};
+
 extern Node *grid;
 extern int gridwidth, gridheight;
 
+void	dprintpath(Node*, Node*);
 void	clearpath(void);
 void	cleargrid(void);
 Node*	initgrid(int, int);
+double	unitmovecost(Node*, Node*);
+Node**	expand(Node*);
 
 int	a∗findpath(Node*, Node*);
 int	bfsfindpath(Node*, Node*);

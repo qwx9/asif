@@ -6,6 +6,7 @@
 #include <keyboard.h>
 #include <pool.h>
 #include "asif.h"
+#include "graph.h"
 #include "path.h"
 #include "dat.h"
 #include "fns.h"

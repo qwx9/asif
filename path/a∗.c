@@ -2,6 +2,7 @@
 #include <libc.h>
 #include <draw.h>
 #include "asif.h"
+#include "graph.h"
 #include "path.h"
 
 typedef Vertex Point;
@@ -15,7 +16,6 @@ struct PNode{
 	Pairheap *pq;
 };
 
-static PNode**	(*successorfn)(Node*);
 static Zpool *zpool;
 
 static void
@@ -33,142 +33,76 @@ backtrack(Node *a, Node *b)
 	}
 }
 
-/* slightly penalize diagonal movement for nicer-looking paths; cf.:
- * https://www.redbloblgames.com/pathfinding/a-star/implementation.html
- * one addition: make cost function to increase at a slower rate to
- * resolve tie-breakers in favor of closer nodes, otherwise we will
- * explore all nodes in the rectangle between the two points */
-static double
-movecost(int Δx, int Δy)
+static Node **
+successors(Node *u)
 {
-	return Δx != 0 && Δy != 0 ? 1.001 : 1.0;
-}
+	Node **vl, **vp, *n;
+	PNode *pu;
 
-static PNode **
-successors8(Node *nu)
-{
-	static PNode *suc[8+1];
-	static dtab[2*(nelem(suc)-1)]={
-		1,0, 0,-1, -1,0, 0,1,
-		-1,-1, -1,1, 1,-1, 1,1,
-	};
-	int i;
-	Node *nv;
-	PNode *v, **vp;
-	Point p;
-	Rectangle r;
-
-	memset(suc, 0, sizeof suc);
-	p = n2p(nu);
-	r = Rect(0, 0, gridwidth, gridheight);
-	for(i=0, vp=suc; i<nelem(dtab); i+=2){
-		if(!ptinrect(addpt(p, Pt(dtab[i], dtab[i+1])), r))
-			continue;
-		nv = nu + dtab[i+1] * gridwidth + dtab[i];
-		assert(nv >= grid && nv < grid + gridwidth * gridheight);
-		if(isblocked(nv))
-			continue;
-		if((v = nv->aux) == nil){
-			v = nv->aux = zalloc(zpool);
-			v->n = nv;
+	vl = expand(u);
+	for(vp=vl; (n=*vp)!=nil; vp++)
+		if(n->aux == nil){
+			pu = n->aux = zalloc(zpool);
+			pu->n = n;
 		}
-		v->Δg = movecost(dtab[i], dtab[i+1]);
-		*vp++ = v;
-	}
-	return suc;
-}
-
-static PNode **
-successors4(Node *nu)
-{
-	static PNode *suc[4+1];
-	static int dtab[2*(nelem(suc)-1)]={
-		1,0, -1,0, 0,-1, 0,1,
-	}, rdtab[nelem(dtab)]={
-		0,1, 0,-1, -1,0, 1,0,
-	};
-	int i, *t;
-	Node *nv;
-	PNode *v, **vp;
-	Point p;
-	Rectangle r;
-
-	memset(suc, 0, sizeof suc);
-	p = n2p(nu);
-	r = Rect(0, 0, gridwidth, gridheight);
-	/* path straightening; cf.:
-	 * https://www.redbloblgames.com/pathfinding/a-star/implementation.html */
-	t = (p.x + p.y) % 2 == 0 ? rdtab : dtab;
-	for(i=0, vp=suc; i<nelem(dtab); i+=2){
-		if(!ptinrect(addpt(p, Pt(t[i], t[i+1])), r))
-			continue;
-		nv = nu + t[i+1] * gridwidth + t[i];
-		assert(nv >= grid && nv < grid + gridwidth * gridheight);
-		if(isblocked(nv))
-			continue;
-		if((v = nv->aux) == nil){
-			v = nv->aux = zalloc(zpool);
-			v->n = nv;
-		}
-		v->Δg = movecost(t[i], t[i+1]);
-		*vp++ = v;
-	}
-	return suc;
+	return vl;
 }
 
 static int
 a∗(Node *a, Node *b)
 {
 	double g, Δg;
-	PNode *u, *v, **vl;
-	Node *nu, *nv;
-	Pairheap *queue, *pn;
+	Node *u, *v, **vl;
+	PNode *pu, *pv;
+	Pairheap *queue, *pq;
 
 	queue = nil;
-	u = a->aux = zalloc(zpool);
-	nu = u->n = a;
-	u->pq = pushqueue(distfn(a, b), u, &queue);
-	while((pn = popqueue(&queue)) != nil){
-		u = pn->aux;
-		nu = u->n;
-		free(pn);
-		if(nu == b)
+	u = a;
+	pu = zalloc(zpool);
+	pu->n = u;
+	u->aux = pu;
+	pu->pq = pushqueue(distfn(a, b), pu, &queue);
+	while((pq = popqueue(&queue)) != nil){
+		pu = pq->aux;
+		u = pu->n;
+		free(pq);
+		if(u == b)
 			break;
-		nu->closed = 1;
+		u->closed = 1;
 		stats.closed++;
 		dprint(Logtrace, "a∗: closed [%#p,%P] h %.4f g %.4f\n",
-			u, n2p(nu), u->h, u->g);
-		if((vl = successorfn(nu)) == nil)
+			u, n2p(u), pu->h, pu->g);
+		if((vl = successors(u)) == nil)
 			sysfatal("a∗: %r");
 		for(v=*vl++; v!=nil; v=*vl++){
-			nv = v->n;
+			pv = v->aux;
 			stats.touched++;
-			if(nv->closed)
+			if(v->closed)
 				continue;
-			g = u->g + v->Δg;
-			Δg = v->g - g;
-			if(!nv->open){
-				nv->from = nu;
-				nv->open = 1;
+			g = pu->g + unitmovecost(u, v);
+			Δg = pv->g - g;
+			if(!v->open){
+				v->from = u;
+				v->open = 1;
 				stats.opened++;
-				v->h = distfn(nv, b);
-				v->g = g;
+				pv->h = distfn(v, b);
+				pv->g = g;
 				dprint(Logtrace, "a∗: opened [%#p,%P] h %.4f g %.4f f %.4f\n",
-					v, n2p(nv), v->h, v->g, v->h + v->g);
-				v->pq = pushqueue(v->g + v->h, v, &queue);
+					v, n2p(v), pv->h, pv->g, pv->h + pv->g);
+				pv->pq = pushqueue(pv->g + pv->h, pv, &queue);
 			}else if(Δg > 0){
 				stats.updated++;
 				dprint(Logtrace, "a∗: decrease [%#p,%P] h %.4f g %.4f Δg %.4f → f %.4f\n",
-					v, n2p(nv), v->h, v->g, Δg, v->h + v->g - Δg);
-				nv->from = u->n;
-				v->g -= Δg;
-				decreasekey(v->pq, Δg, &queue);
-				assert(v->g >= 0);
+					v, n2p(v), pv->h, pv->g, Δg, pv->h + pv->g - Δg);
+				v->from = u;
+				pv->g -= Δg;
+				decreasekey(pv->pq, Δg, &queue);
+				assert(pv->g >= 0);
 			}
 		}
 	}
 	nukequeue(&queue);
-	if(nu != b)
+	if(u != b)
 		return -1;
 	return 0;
 }
@@ -182,7 +116,6 @@ a∗findpath(Node *a, Node *b)
 	clearpath();
 	if(zpool == nil)
 		zpool = znew(sizeof(PNode));
-	successorfn = movemode == Move8 ? successors8 : successors4;
 	dprint(Logdebug, "grid::a∗findpath: a∗ from [%#p,%P] to [%#p,%P]\n",
 		a, n2p(a), b, n2p(b));
 	if((r = a∗(a, b)) < 0)
@@ -190,5 +123,7 @@ a∗findpath(Node *a, Node *b)
 	else
 		backtrack(a, b);
 	znuke(zpool);
+	if(r >= 0)
+		dprintpath(a, b);
 	return r;
 }

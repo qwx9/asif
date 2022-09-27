@@ -1,6 +1,7 @@
 #include <u.h>
 #include <libc.h>
 #include "asif.h"
+#include "graph.h"
 #include "path.h"
 
 Node *grid;
@@ -46,10 +47,117 @@ toggleblocked(Node *n)
 	n->blocked ^= 1;
 }
 
+/* slightly penalize diagonal movement for nicer-looking paths; cf.:
+ * https://www.redbloblgames.com/pathfinding/a-star/implementation.html
+ * one addition: make cost function to increase at a slower rate to
+ * resolve tie-breakers in favor of closer nodes, otherwise we will
+ * explore all nodes in the rectangle between the two points */
+double
+unitmovecost(Node *a, Node *b)
+{
+	Vertex Δ;
+
+	Δ = ΔV(*b, *a);
+	return Δ.x != 0 && Δ.y != 0 ? 1.001 : 1.0;
+}
+
 int
 isblocked(Node *n)
 {
+	if(n < grid || n >= grid + gridwidth * gridheight){
+		fprint(2, "isblocked: access beyond borders at %N\n", n);
+		return 1;
+	}
 	return n->blocked;
+}
+
+Node **
+expand4(Node *u)
+{
+	static Node *neigh[4+1];
+	static Vertex dtab[]={
+		{1,0}, {-1,0}, {0,-1}, {0,1},
+	}, rdtab[nelem(dtab)]={
+		{0,1}, {0,-1}, {-1,0}, {1,0},
+	};
+	int i;
+	Node *v, **vl;
+	Vertex p, p´, *dir;
+	Vectangle r;
+
+	memset(neigh, 0, sizeof neigh);
+	p = n2p(u);
+	r = V²(0, 0, gridwidth, gridheight);
+	/* simple path straightening, cf.:
+	 * https://www.redblobgames.com/pathfinding/a-star/implementation.html */
+	dir = (p.x + p.y) % 2 == 0 ? rdtab : dtab;
+	for(i=0, vl=neigh; i<nelem(dtab); i++){
+		p´ = ∑V(p, dir[i]);
+		if(!V∩V²(p´, r))
+			continue;
+		v = u + p´.y * gridwidth + p´.x;
+		assert(v >= grid && v < grid + gridwidth * gridheight);
+		if(!isblocked(v))
+			*vl++ = v;
+	}
+	return neigh;
+}
+
+Node **
+expand8(Node *u)
+{
+	static Node *neigh[8+1];
+	/* same as for expand4, order tweaked for nicer paths */
+	static Vertex dir[] = {
+		{1,0}, {0,-1}, {-1,0}, {0,1},
+		{-1,-1}, {-1,1}, {1,-1}, {1,1},
+	};
+	static dmask[] = {
+		θ→, θ↑, θ←, θ↓,
+		θ← | θ↑, θ← | θ↓, θ→ | θ↑, θ→ | θ↓
+	};
+	int i, open;
+	Node *v, **vl;
+	Vertex p, p´;
+	Vectangle r;
+
+	assert(u >= grid && u < grid + gridwidth * gridheight);
+	memset(neigh, 0, sizeof neigh);
+	p = n2p(u);
+	r = V²(0, 0, gridwidth, gridheight);
+	for(i=0, vl=neigh, open=0; i<nelem(dir); i++){
+		p´ = ∑V(p, dir[i]);
+		if(!V∩V²(p´, r)){
+			open |= dmask[i];
+			continue;
+		}
+		v = grid + p´.y * gridwidth + p´.x;
+		/* forbid corner cutting */
+		if(isblocked(v) || (open & dmask[i]) != 0){
+			open |= dmask[i];
+			continue;
+		}
+		*vl++ = v;
+	}
+	return neigh;
+}
+
+Node **
+expand(Node *n)
+{
+	return movemode == Move8 ? expand8(n) : expand4(n);
+}
+
+void
+dprintpath(Node *n, Node *goal)
+{
+	if(debuglevel < Logtrace)
+		return;
+	dprint(Logtrace, "path: ");
+	while(n != goal){
+		dprint(Logtrace, "%N ", n);
+		n = n->to;
+	}
 }
 
 void

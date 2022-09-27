@@ -2,6 +2,7 @@
 #include <libc.h>
 #include <draw.h>
 #include "asif.h"
+#include "graph.h"
 #include "path.h"
 #include "dat.h"
 #include "fns.h"
@@ -12,6 +13,7 @@ int showgrid;
 int nodesz = 1;
 
 typedef Vertex Point;
+typedef Vectangle Rectangle;
 
 enum{
 	Cbg,

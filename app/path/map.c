@@ -1,6 +1,7 @@
 #include <u.h>
 #include <libc.h>
 #include "asif.h"
+#include "graph.h"
 #include "path.h"
 #include "dat.h"
 #include "fns.h"
@@ -58,7 +59,7 @@ initmap(char *scen, char *res, Vertex v, int m, int a, int d)
 	setparm(m, a, d);
 	if(scen == nil)
 		initgrid(v.x, v.y);
-	else if(readscen(scen, res, &v, &m, &a, &d) < 0)
+	else if(readscen(scen, res, &v) < 0)
 		sysfatal("readscen: %r");
 	return 0;
 }

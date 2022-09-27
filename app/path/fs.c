@@ -2,6 +2,7 @@
 #include <libc.h>
 #include <bio.h>
 #include "asif.h"
+#include "graph.h"
 #include "path.h"
 #include "dat.h"
 #include "fns.h"
@@ -197,7 +198,7 @@ readscenhdr(Biobuf *bf, Vertex *v)
 }
 
 int
-readscen(char *path, char *respath, Vertex *v, int *m, int *a, int *d)
+readscen(char *path, char *respath, Vertex *v)
 {
 	int n;
 	char *s, *arg[32];
@@ -207,9 +208,6 @@ readscen(char *path, char *respath, Vertex *v, int *m, int *a, int *d)
 	if(path == nil)
 		return 0;
 	doprof = 1;
-	/* only supported benchmarking configurations so far */
-	if(*a != Pa∗ && *a != Pdijkstra)
-		sysfatal("unimplemented profiling for parameter set");
 	if((s = strrchr(path, '.')) == nil){
 		werrstr("invalid path name");
 		return -1;

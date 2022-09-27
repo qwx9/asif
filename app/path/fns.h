@@ -6,7 +6,7 @@ void	evloop(void);
 void	showscen(int);
 void	reloadscen(void);
 void	runscens(void);
-int	readscen(char*, char*, Vertex*, int*, int*, int*);
+int	readscen(char*, char*, Vertex*);
 void	initfs(void);
 int	Vfmt(Fmt*);
 int	Nfmt(Fmt*);

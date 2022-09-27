@@ -1,8 +1,9 @@
 </$objtype/mkfile
 BIN=$home/bin/$objtype/asif
 TARG=path
-HFILES=../../asif.h ../../path/path.h dat.h fns.h
+HFILES=../../asif.h ../../path/path.h ../../graph/graph.h dat.h fns.h
 OFILES=\
+	../../graph/vertex.$O\
 	../../path/a∗.$O\
 	../../path/bfs.$O\
 	../../path/dijkstra.$O\
@@ -21,7 +22,7 @@ OFILES=\
 
 </sys/src/cmd/mkone
 
-CFLAGS=$CFLAGS -I../.. -I../../path
+CFLAGS=$CFLAGS -I../.. -I../../path -I../../graph
 %.$O:	%.c
 	$CC -o $target $CFLAGS $stem.c
 
