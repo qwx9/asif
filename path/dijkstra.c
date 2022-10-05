@@ -23,18 +23,6 @@ struct PNode{
 static Zpool *zpool;
 
 static void
-cleanup(Pairheap **queue)
-{
-	Pairheap *p;
-
-	while((p = popqueue(queue)) != nil){
-		memset(p, 0, sizeof *p);
-		free(p);
-	}
-	znuke(zpool);
-}
-
-static void
 backtrack(Node *a, Node *b)
 {
 	Node *n;
@@ -111,23 +99,26 @@ dijkstra(Node *a, Node *b)
 	nukequeue(&queue);
 	if(u != b)
 		return -1;
-	backtrack(a, b);
 	return 0;
 }
 
 int
 dijkstrafindpath(Node *a, Node *b)
 {
+	int r;
+
 	assert(a != nil && b != nil && a != b);
 	clearpath();
 	if(zpool == nil)
 		zpool = znew(sizeof(PNode));
 	dprint(Logdebug, "grid::dijkstrafindpath: dijkstra from [%#p,%P] to [%#p,%P]\n",
 		a, n2p(a), b, n2p(b));
-	if(dijkstra(a, b) < 0){
+	if((r = dijkstra(a, b)) < 0)
 		dprint(Logdebug, "grid::dijkstrafindpath: failed to find a path\n");
-		return -1;
-	}
-	dprintpath(a, b);
-	return 0;
+	else
+		backtrack(a, b);
+	znuke(zpool);
+	if(r >= 0)
+		dprintpath(a, b);
+	return r;
 }
