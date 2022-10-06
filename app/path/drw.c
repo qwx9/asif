@@ -11,6 +11,7 @@ QLock drawlock;
 Node *selected;
 int showgrid;
 int nodesz = 1;
+Point pan;
 
 typedef Vertex Point;
 typedef Vectangle Rectangle;
@@ -42,10 +43,17 @@ eallocimage(Rectangle r, int repl, ulong col)
 	return i;
 }
 
+void
+dopan(Point p)
+{
+	pan.x -= p.x;
+	pan.y -= p.y;
+}
+
 Node *
 scrselect(Point p)
 {
-	p = subpt(addpt(subpt(p, screen->r.min), viewΔ), Pt(1,1));
+	p = addpt(subpt(addpt(subpt(p, screen->r.min), viewΔ), Pt(1,1)), pan);
 	if(!ptinrect(p, viewr)){
 		selected = nil;
 		return nil;
@@ -60,26 +68,47 @@ scrselect(Point p)
 static void
 flushdrw(void)
 {
-	draw(screen, screen->r, view, nil, viewΔ);
+	draw(screen, screen->r, view, nil, addpt(viewΔ, pan));
 	flushimage(display, 1);
 }
 
 static void
 drawhud(void)
 {
-	char s[64], *sp;
+	char s[128], *sp;
 	Node *n;
+	Point p;
 
 	draw(screen, hudr, col[Cbg], nil, ZP);
-	sp = seprint(s, s+sizeof s, "grid size: %d,%d", viewr.max.x-1, viewr.max.y-1);
+	sp = seprint(s, s+sizeof s, "grid size: %dx%d (x%d)", gridwidth, gridheight, nodesz);
 	if((n = selected) != nil){
 		assert(n >= grid && n < grid + gridwidth * gridheight);
-		sp = seprint(sp, s+sizeof s, " selected: %P%s",
-			Pt((n-grid) % gridwidth, (n-grid) / gridwidth),
-			isblocked(n) ? ": blocked" : "");
+		sp = seprint(sp, s+sizeof s, " selected: %P ",
+			Pt((n-grid) % gridwidth, (n-grid) / gridwidth));
+		if(isblocked(n))
+			sp = strecpy(sp, s+sizeof s, "B");
+		else if(n == start)
+			sp = strecpy(sp, s+sizeof s, "s");
+		else if(n == goal)
+			sp = strecpy(sp, s+sizeof s, "g");
+		else if(n->to != nil)
+			sp = strecpy(sp, s+sizeof s, "p");
+		else if(n->closed)
+			sp = strecpy(sp, s+sizeof s, "C");
+		else if(n->open)
+			sp = strecpy(sp, s+sizeof s, "O");
 	}
 	USED(sp);
-	string(screen, addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ)), col[Cfree], ZP, font, s);
+	p = addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ));
+	string(screen, p, col[Cfree], ZP, font, s);
+	if(start != nil && goal != nil){
+		seprint(s, s+sizeof s,
+			"path len=%d Δ=%.2f $=%.2f opened=%d expanded=%d updated=%d closed=%d",
+			stats.steps, stats.dist, stats.cost, stats.touched, stats.opened,
+			stats.updated, stats.closed);
+		p.y += font->height;
+		string(screen, p, col[Cfree], ZP, font, s);
+	}
 }
 
 static void
@@ -123,7 +152,6 @@ drawfrom(void)
 			continue;
 		p1 = addpt(n2s(n), Pt(nodesz / 2, nodesz / 2));
 		p0 = addpt(n2s(n->from), Pt(nodesz / 2, nodesz / 2));
-		//line(view, p0, p1, Endarrow, 0, 0, col[Cgrid], ZP);
 		line(view, p0, p1, 0, 0, 0, col[Cgrid], ZP);
 	}
 }
@@ -175,8 +203,10 @@ resetdrw(void)
 {
 	viewr = Rpt(ZP, Pt(gridwidth*nodesz+1, gridheight*nodesz+1));
 	viewΔ = divpt(addpt(subpt(ZP, subpt(screen->r.max, screen->r.min)), viewr.max), 2);
+	if(-viewΔ.y < font->height * 2)
+		viewΔ.y = 0;
 	hudr.min = addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ));
-	hudr.max = addpt(hudr.min, Pt(screen->r.max.x, font->height*3));
+	hudr.max = addpt(hudr.min, Pt(screen->r.max.x, font->height*2));
 	freeimage(view);
 	view = eallocimage(viewr, 0, DNofill);
 	updatedrw(1);
@@ -199,8 +229,9 @@ initdrw(void)
 	col[Cstart] = eallocimage(Rect(0,0,1,1), 1, 0x00cc00ff);
 	col[Cgoal] = eallocimage(Rect(0,0,1,1), 1, 0xcc0000ff);
 	zx = Dx(screen->r) / gridwidth;
-	zy = Dy(screen->r) / gridheight;
+	zy = (Dy(screen->r) - font->height*2) / gridheight;
 	z = MIN(zx, zy);
-	nodesz = z <= 1 ? 1 : z > 2 ? z & ~1 : z;
+	//nodesz = z <= 1 ? 1 : z > 2 ? z & ~1 : z;
+	nodesz = z <= 1 ? 1 : z;
 	resetdrw();
 }

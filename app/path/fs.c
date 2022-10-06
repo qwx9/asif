@@ -30,7 +30,7 @@ showscen(int id)
 	start = p2n(sp->start);
 	goal = p2n(sp->goal);
 	if(pathfn(start, goal) < 0)
-		fprint(2, "runscens: findpath from %N to %N: %r\n",
+		fprint(2, "showscen: findpath from %N to %N: %r\n",
 			start, goal);
 }
 
@@ -43,7 +43,7 @@ readresults(char *path)
 	Sim *sp, *se;
 
 	if((bf = Bopen(path, OREAD)) == nil)
-		sysfatal("readscen: %r");
+		sysfatal("readresults: %r");
 	sp = sims->p;
 	se = sp + sims->n;
 	while(sp < se){
@@ -77,7 +77,7 @@ runscens(void)
 		if(pathfn(start, goal) < 0)
 			fprint(2, "runscens: findpath from %N to %N: %r\n",
 				start, goal);
-		memcpy(sp, &stats, sizeof stats);
+		sp->Prof = stats;
 		fprint(2, "%zd\t%d\t%d\t%d\t%d\t%d\t%.3f\t%.3f\n",
 			sp - (Sim*)sims->p,
 			stats.steps, stats.touched, stats.opened,

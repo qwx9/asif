@@ -11,7 +11,7 @@
 #include "dat.h"
 #include "fns.h"
 
-int	(*mousefn)(Mouse);
+int	(*mousefn)(Mouse, Point);
 int	(*keyfn)(Rune);
 
 static Keyboardctl *kc;
@@ -29,6 +29,7 @@ void
 evloop(void)
 {
 	Rune r;
+	Mouse mold;
 
 	enum{
 		Aresize,
@@ -48,10 +49,12 @@ evloop(void)
 			if(getwindow(display, Refnone) < 0)
 				sysfatal("resize failed: %r");
 			resetdrw();
+			mold = mc->Mouse;
 			break;
 		case Amouse:
-			if(mousefn(mc->Mouse))
+			if(mousefn(mc->Mouse, subpt(mc->Mouse.xy, mold.xy)))
 				updatedrw(0);
+			mold = mc->Mouse;
 			break;
 		case Akbd:
 			keyfn(r);

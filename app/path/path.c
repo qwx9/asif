@@ -11,7 +11,9 @@
 #include "dat.h"
 #include "fns.h"
 
-extern int	(*mousefn)(Mouse);
+extern int	(*mousefn)(Mouse, Point);
+extern void	dopan(Point);
+extern Point pan;
 extern int	(*keyfn)(Rune);
 
 mainstacksize = 512*1024;
@@ -21,14 +23,17 @@ Node *start, *goal;
 static setgoalmode;
 
 static int
-grmouse(Mouse m)
+grmouse(Mouse m, Point Δ)
 {
 	static Node *old;
 	Node *n;
 
-	if(m.buttons == 0){
-		old = nil;
+	if(m.buttons == 0)
 		return 0;
+	else if((m.buttons & 7) == 2){
+		dopan(Δ);
+		updatedrw(1);
+		return 1;
 	}
 	if((n = scrselect(m.xy)) == nil || old == n)
 		return 0;
@@ -36,8 +41,6 @@ grmouse(Mouse m)
 	case 1:
 		if(old == nil || isblocked(n) ^ isblocked(old))
 			toggleblocked(n);
-		break;
-	case 2:
 		break;
 	case 4:
 		if(setgoalmode){
@@ -120,6 +123,10 @@ grkey(Rune r)
 			nodesz >>= 1;
 			resetdrw();
 		}
+		break;
+	case 'z':
+		pan = ZP;
+		updatedrw(1);
 		break;
 	}
 	return 0;
