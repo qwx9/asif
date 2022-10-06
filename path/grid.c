@@ -128,13 +128,20 @@ expand8(Node *u)
 	for(i=0, vl=neigh, open=0; i<nelem(dir); i++){
 		p´ = ∑V(p, dir[i]);
 		if(!V∩V²(p´, r)){
-			open |= dmask[i];
+			if(i < 4)
+				open |= dmask[i];
+			dprint(Logtrace, "%N→%V out of bounds\n", u, p´);
 			continue;
 		}
 		v = grid + p´.y * gridwidth + p´.x;
+		if(isblocked(v)){
+			if(i < 4)
+				open |= dmask[i];
+			continue;
 		/* forbid corner cutting */
-		if(isblocked(v) || (open & dmask[i]) != 0){
-			open |= dmask[i];
+		}else if((open & dmask[i]) != 0){
+			dprint(Logtrace, "%N→%N move disallowed, dir %#02ux blk %#02ux\n",
+				u, v, dmask[i], open);
 			continue;
 		}
 		*vl++ = v;
