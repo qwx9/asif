@@ -113,6 +113,7 @@ dijkstrafindpath(Node *a, Node *b)
 		zpool = znew(sizeof(PNode));
 	dprint(Logdebug, "grid::dijkstrafindpath: dijkstra from [%#p,%P] to [%#p,%P]\n",
 		a, n2p(a), b, n2p(b));
+	stats.dist = distfn(a, b);
 	if((r = dijkstra(a, b)) < 0)
 		dprint(Logdebug, "grid::dijkstrafindpath: failed to find a path\n");
 	else

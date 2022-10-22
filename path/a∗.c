@@ -118,6 +118,7 @@ a∗findpath(Node *a, Node *b)
 		zpool = znew(sizeof(PNode));
 	dprint(Logdebug, "grid::a∗findpath: a∗ from [%#p,%P] to [%#p,%P]\n",
 		a, n2p(a), b, n2p(b));
+	stats.dist = distfn(a, b);
 	if((r = a∗(a, b)) < 0)
 		dprint(Logdebug, "grid::a∗findpath: failed to find a path\n");
 	else

@@ -65,6 +65,7 @@ bfsfindpath(Node *a, Node *b)
 	clearpath();
 	dprint(Logdebug, "grid::bfsfindpath: bfs from [%#p,%P] to [%#p,%P]\n",
 		a, n2p(a), b, n2p(b));
+	stats.dist = distfn(a, b);
 	if(bfs(a, b) < 0){
 		dprint(Logdebug, "grid::bfsfindpath: failed to find a path\n");
 		return -1;
