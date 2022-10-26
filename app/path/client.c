@@ -11,9 +11,10 @@
 #include "dat.h"
 #include "fns.h"
 
-int	(*mousefn)(Mouse, Point);
-int	(*keyfn)(Rune);
+typedef Vertex Point;
 
+static int	(*mousefn)(Mouse, Point);
+static int	(*keyfn)(Rune);
 static Keyboardctl *kc;
 static Mousectl *mc;
 
@@ -64,18 +65,24 @@ evloop(void)
 }
 
 void
-init(char *scen, char *res, Vertex v, int m, int a, int d)
+initgraphics(int (*kfn)(Rune), int (*mfn)(Mouse, Point))
+{
+	keyfn = kfn;
+	mousefn = mfn;
+	initdrw();
+	if((kc = initkeyboard(nil)) == nil)
+		sysfatal("initkeyboard: %r");
+	if((mc = initmouse(nil, screen)) == nil)
+		sysfatal("initmouse: %r");
+}
+
+void
+init(char *map, Vertex dim, int m, int a, int d)
 {
 	fmtinstall('P', Pfmt);
 	fmtinstall('R', Rfmt);
 	fmtinstall('V', Vfmt);
 	fmtinstall('N', Nfmt);
 	initfs();
-	if(initmap(scen, res, v, m, a, d) < 0)
-		sysfatal("init: %r");
-	initdrw();
-	if((kc = initkeyboard(nil)) == nil)
-		sysfatal("initkeyboard: %r");
-	if((mc = initmouse(nil, screen)) == nil)
-		sysfatal("initmouse: %r");
+	initmap(map, dim, m, a, d);
 }

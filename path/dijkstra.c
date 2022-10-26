@@ -79,7 +79,7 @@ dijkstra(Node *a, Node *b)
 			sysfatal("a∗: %r");
 		for(v=*vl++; v!=nil; v=*vl++){
 			pv = v->aux;
-			stats.touched++;
+			stats.opened++;
 			if(v->closed)
 				continue;
 			g = pu->g + unitmovecost(u, v);
@@ -88,9 +88,9 @@ dijkstra(Node *a, Node *b)
 			if(!v->open){
 				v->from = u;
 				v->open = 1;
-				stats.opened++;
+				stats.expanded++;
 				pv->g = g;
-				dprint(Logtrace, "dijkstra: opened [%#p,%P] g %.4f\n",
+				dprint(Logtrace, "dijkstra: expanded [%#p,%P] g %.4f\n",
 					v, n2p(v), pv->g);
 				pv->pq = pushqueue(pv->g, pv, &queue);
 			}

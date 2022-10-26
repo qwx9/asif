@@ -50,6 +50,21 @@ dopan(Point p)
 	pan.y -= p.y;
 }
 
+void
+errmsg(char *fmt, ...)
+{
+	char s[256];
+	va_list arg;
+	Point p;
+
+	va_start(arg, fmt);
+	vseprint(s, s+sizeof s, fmt, arg);
+	va_end(arg);
+	p = addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ));
+	p.y += font->height * 2;
+	string(screen, p, col[Cgoal], ZP, font, s);
+}
+
 Node *
 scrselect(Point p)
 {
@@ -98,13 +113,17 @@ drawhud(void)
 		else if(n->open)
 			sp = strecpy(sp, s+sizeof s, "O");
 	}
+	sp = seprint(sp, s+sizeof s, "; RMB sets %s",
+		mousemode == Mmodegoal ? "goal" :
+		mousemode == Mmodestart ? "start" :
+		"block");
 	USED(sp);
 	p = addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ));
 	string(screen, p, col[Cfree], ZP, font, s);
 	if(start != nil && goal != nil){
 		seprint(s, s+sizeof s,
 			"path len=%d Δ=%.2f $=%.2f opened=%d expanded=%d updated=%d closed=%d",
-			stats.steps, stats.dist, stats.cost, stats.touched, stats.opened,
+			stats.steps, stats.dist, stats.cost, stats.opened, stats.expanded,
 			stats.updated, stats.closed);
 		p.y += font->height;
 		string(screen, p, col[Cfree], ZP, font, s);
@@ -206,7 +225,7 @@ resetdrw(void)
 	if(-viewΔ.y < font->height * 2)
 		viewΔ.y = 0;
 	hudr.min = addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ));
-	hudr.max = addpt(hudr.min, Pt(screen->r.max.x, font->height*2));
+	hudr.max = addpt(hudr.min, Pt(screen->r.max.x, font->height*3));
 	freeimage(view);
 	view = eallocimage(viewr, 0, DNofill);
 	updatedrw(1);

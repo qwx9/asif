@@ -70,8 +70,8 @@ struct Prof{
 	double dist;
 	double cost;
 	int steps;
-	int touched;
 	int opened;
+	int expanded;
 	int updated;
 	int closed;
 };

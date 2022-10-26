@@ -42,10 +42,10 @@ bfs(Node *a, Node *b)
 		if((vl = expand(u)) == nil)
 			sysfatal("bfs: %r");
 		for(v=*vl++; v!=nil; v=*vl++){
-			stats.touched++;
+			stats.opened++;
 			if(v->open)
 				continue;
-			stats.opened++;
+			stats.expanded++;
 			v->from = u;
 			vecpush(front, &v);
 			v->open = 1;

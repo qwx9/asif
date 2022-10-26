@@ -76,7 +76,7 @@ a∗(Node *a, Node *b)
 			sysfatal("a∗: %r");
 		for(v=*vl++; v!=nil; v=*vl++){
 			pv = v->aux;
-			stats.touched++;
+			stats.opened++;
 			if(v->closed)
 				continue;
 			g = pu->g + unitmovecost(u, v);
@@ -84,10 +84,10 @@ a∗(Node *a, Node *b)
 			if(!v->open){
 				v->from = u;
 				v->open = 1;
-				stats.opened++;
+				stats.expanded++;
 				pv->h = distfn(v, b);
 				pv->g = g;
-				dprint(Logtrace, "a∗: opened [%#p,%P] h %.4f g %.4f f %.4f\n",
+				dprint(Logtrace, "a∗: expanded [%#p,%P] h %.4f g %.4f f %.4f\n",
 					v, n2p(v), pv->h, pv->g, pv->h + pv->g);
 				pv->pq = pushqueue(pv->g + pv->h, pv, &queue);
 			}else if(Δg > 0){

@@ -11,16 +11,13 @@
 #include "dat.h"
 #include "fns.h"
 
-extern int	(*mousefn)(Mouse, Point);
 extern void	dopan(Point);
 extern Point pan;
-extern int	(*keyfn)(Rune);
 
-mainstacksize = 512*1024;
+mainstacksize = 128*1024;
 
 Node *start, *goal;
-
-static setgoalmode;
+int mousemode;
 
 static int
 grmouse(Mouse m, Point Δ)
@@ -28,9 +25,10 @@ grmouse(Mouse m, Point Δ)
 	static Node *old;
 	Node *n;
 
-	if(m.buttons == 0)
+	if(m.buttons == 0){
+		old = nil;
 		return 0;
-	else if((m.buttons & 7) == 2){
+	}else if((m.buttons & 7) == 2){
 		dopan(Δ);
 		updatedrw(1);
 		return 1;
@@ -38,26 +36,20 @@ grmouse(Mouse m, Point Δ)
 	if((n = scrselect(m.xy)) == nil || old == n)
 		return 0;
 	switch(m.buttons & 7){
-	case 1:
-		if(old == nil || isblocked(n) ^ isblocked(old))
-			toggleblocked(n);
-		break;
+	case 1: break; /* just selecting the node */
 	case 4:
-		if(setgoalmode){
-			if(start != n && !isblocked(n))
-				goal = n;
-		}else{
-			if(goal != n && !isblocked(n))
-				start = n;
+		switch(mousemode){
+		case Mmodegoal: if(n != start && !isblocked(n)) goal = n; break;
+		case Mmodestart: if(n != goal && !isblocked(n)) start = n; break;
+		case Mmodeblock:
+			if(n != start && n != goal
+			&& (old == nil || isblocked(n) ^ isblocked(old)))
+				toggleblocked(n);
+			break;
 		}
-		break;
 	}
 	old = n;
-	if(start != nil && goal != nil)
-		if(pathfn(start, goal) < 0){
-			dprint(Logdebug, "grid::findpath: findpath from [%#p,%P] to [%#p,%P]: %r\n",
-				start, n2p(start), goal, n2p(goal));
-		}
+	trypath(start, goal);
 	return 1;
 }
 
@@ -67,7 +59,7 @@ setscen(void)
 	int n;
 	char buf[128];
 
-	snprint(buf, sizeof buf, "%d", scenid);
+	snprint(buf, sizeof buf, "%d", curscen);
 	if(menter("Scenario id?", buf, sizeof buf) < 0){
 		fprint(2, "getscen: %r\n");
 		return -1;
@@ -76,7 +68,6 @@ setscen(void)
 		fprint(2, "getscen: invalid id %s\n", buf);
 		return -1;
 	}
-	scenid = n;
 	showscen(n);
 	return 0;
 }
@@ -89,16 +80,13 @@ grkey(Rune r)
 	case 'q':
 		threadexitsall(nil);
 	case 'r':
-		if(doprof){
-			reloadscen();
-			showscen(scenid);
-		}else
-			cleargrid();
+		reloadscen();
 		updatedrw(0);
 		break;
 	case ' ':
 	case '\n':
-		setgoalmode ^= 1;
+		mousemode = (mousemode + 1) % Mmodes;
+		updatedrw(0);
 		break;
 	case 'g':
 		showgrid ^= 1;
@@ -106,8 +94,6 @@ grkey(Rune r)
 		break;
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
-		if(!doprof)
-			break;
 		if(setscen() >= 0)
 			updatedrw(0);
 		break;
@@ -135,7 +121,7 @@ grkey(Rune r)
 static void
 usage(void)
 {
-	fprint(2, "usage: %s [-D4] [-a algo] [-d dist] [-s width[,height]] [-m scen]\n", argv0);
+	fprint(2, "usage: %s [-D4p] [-a algo] [-d dist] [-s width[,height]] [-m map] [-S scen] [-r res]\n", argv0);
 	threadexits("usage");
 }
 
@@ -143,15 +129,17 @@ void
 threadmain(int argc, char **argv)
 {
 	int w, h, a, d, m;
-	char *s, *scenres, *scenmap;
+	char *s, *map, *scen, *res;
 
-	w = 64;
-	h = 64;
+	w = -1;
+	h = -1;
 	a = -1;
 	d = -1;
-	m = Move8;
-	scenmap = nil;
-	scenres = nil;
+	m = -1;
+	doprof = 0;
+	map = nil;
+	scen = nil;
+	res = nil;
 	ARGBEGIN{
 	case 'D':
 		if(++debuglevel >= Logparanoid)
@@ -188,10 +176,16 @@ threadmain(int argc, char **argv)
 		}
 		break;
 	case 'm':
-		scenmap = EARGF(usage());
+		map = EARGF(usage());
+		break;
+	case 'p':
+		doprof = 1;
 		break;
 	case 'r':
-		scenres = EARGF(usage());
+		res = EARGF(usage());
+		break;
+	case 'S':
+		scen = EARGF(usage());
 		break;
 	case 's':
 		w = strtol(EARGF(usage()), &s, 0);
@@ -207,18 +201,24 @@ threadmain(int argc, char **argv)
 		break;
 	default: usage();
 	}ARGEND
-	if(w <= 0 || w > 512
-	|| h <= 0 || h > 512)
-		sysfatal("invalid map size, must be in ]0,512]");
-	if(d < 0)
-		d = m == Move8 ? Doctile : Dmanhattan;
-	if(a < 0)
-		a = Pa∗;
-	keyfn = grkey;
-	mousefn = grmouse;
-	init(scenmap, scenres, (Vertex){w,h}, m, a, d);
-	if(doprof && scenres == nil)
-		runscens();
+	init(map, (Vertex){w,h}, m, a, d);
+	if(scen != nil){
+		if(map == nil)
+			sysfatal("mat not run scenarios without a map");
+		readscens(scen);
+		if(doprof){
+			runallscens();
+			writeresults();
+			threadexitsall(nil);
+		}
+		if(res != nil)
+			readresults(res);
+	}
+	initgraphics(grkey, grmouse);
+	if(scen != nil){
+		showscen(0);
+		updatedrw(0);
+	}
 	evloop();
 	threadexitsall(nil);
 }
