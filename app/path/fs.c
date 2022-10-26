@@ -27,15 +27,19 @@ parsepath(char *s, Sim *sim)
 
 	n = 0;
 	v = valloc(sim->steps, sizeof(Vertex));
-	while((p = strchr(s, ',')) != nil){
-		*p = 0;
+	for(;;){
+		p = strchr(s, ',');
+		if(p != nil)
+			*p = 0;
 		x = strtoull(s, &t, 10);
 		if(t == s)
 			sysfatal("parsepath: invalid node number");
 		px = V(x % gridwidth, x / gridwidth);
 		vinsert(v, (char*)&px);
-		n++;
+		if(p == nil)
+			break;
 		s = p + 1;
+		n++;
 	}
 	if(n != sim->steps)
 		sysfatal("parsepath -- phase error");
@@ -53,6 +57,7 @@ readresults(char *path)
 	assert(sims != nil);
 	if((bf = Bopen(path, OREAD)) == nil)
 		sysfatal("readresults: %r");
+	free(Brdstr(bf, '\n', 1));	/* header */
 	sp = sims->p;
 	se = sp + sims->n;
 	while(sp < se){
@@ -62,12 +67,12 @@ readresults(char *path)
 			werrstr("invalid record length %d not %d", n, nelem(arg));
 			return -1;
 		}
-		sp->cost = strtod(arg[7], nil);
-		sp->steps = atoi(arg[2]);
-		sp->opened = atoi(arg[3]);
-		sp->expanded = atoi(arg[4]);
-		sp->updated = atoi(arg[5]);
-		sp->closed = atoi(arg[6]);
+		sp->steps = atoi(arg[1]);
+		sp->opened = atoi(arg[2]);
+		sp->expanded = atoi(arg[3]);
+		sp->updated = atoi(arg[4]);
+		sp->closed = atoi(arg[5]);
+		sp->cost = strtod(arg[6], nil);
 		if(sp->steps <= 0)
 			dprint(Lognone, "path::readresults: invalid entry line %zd\n",
 				sp - (Sim *)sims->p);
@@ -91,7 +96,7 @@ writeresults(void)
 	Sim *sp, *se;
 	Vertex *p, *e;
 
-	print("id\tsteps\topened\texpanded\tupdated\texpanded\tcost\tdist\n");
+	print("id\tsteps\topened\texpanded\tupdated\tclosed\tcost\tdist\tpath\n");
 	for(i=0, sp=sims->p, se=sp+sims->n; sp<se; sp++, i++){
 		print("%d\t%d\t%d\t%d\t%d\t%d\t%.3f\t%.3f\t",
 			i, sp->steps, sp->opened, sp->expanded,

@@ -211,8 +211,8 @@ threadmain(int argc, char **argv)
 			writeresults();
 			threadexitsall(nil);
 		}
-		if(res != nil)
-			readresults(res);
+		if(res != nil && readresults(res) < 0)
+			dprint(Lognone, "path::readresults: %r\n");
 	}
 	initgraphics(grkey, grmouse);
 	if(scen != nil){

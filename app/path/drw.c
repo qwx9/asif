@@ -26,6 +26,7 @@ enum{
 	Cpath,
 	Cstart,
 	Cgoal,
+	Cref,
 	Cend,
 };
 static Image *col[Cend];
@@ -131,6 +132,32 @@ drawhud(void)
 }
 
 static void
+drawscenpath(void)
+{
+	int sz;
+	Sim *sp;
+	Vertex *vp, *ve;
+	Node *n;
+	Rectangle r;
+
+	if(sims == nil || curscen >= sims->n)
+		return;
+	sp = (Sim *)sims->p + curscen;
+	if(sp->path == nil || sp->path->n == 0)
+		return;
+	sz = MAX(nodesz - showgrid, 1);
+	for(vp=sp->path->p, ve=vp+sp->path->n; vp<ve; vp++){
+		n = grid + vp->y * gridwidth + vp->x;
+		if(n == goal)
+			return;
+		r.min = n2s(n);
+		r.max = addpt(r.min, Pt(sz, sz));
+		draw(view, r, col[Cref], nil, ZP);
+	}
+	dprint(Lognone, "path::drawscenpath: malformed or wrong path\n");
+}
+
+static void
 drawnodes(void)
 {
 	int sz;
@@ -203,6 +230,7 @@ redraw(int clear)
 	if(showgrid && nodesz > 1)
 		drawgrid();
 	drawnodes();
+	drawscenpath();
 	if(nodesz > 8)
 		drawfrom();
 }
@@ -247,6 +275,7 @@ initdrw(void)
 	col[Cpath] = eallocimage(Rect(0,0,1,1), 1, 0xcccc00ff);
 	col[Cstart] = eallocimage(Rect(0,0,1,1), 1, 0x00cc00ff);
 	col[Cgoal] = eallocimage(Rect(0,0,1,1), 1, 0xcc0000ff);
+	col[Cref] = eallocimage(Rect(0,0,1,1), 1, 0xcc00cc77);
 	zx = Dx(screen->r) / gridwidth;
 	zy = (Dy(screen->r) - font->height*2) / gridheight;
 	z = MIN(zx, zy);
