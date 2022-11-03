@@ -29,6 +29,7 @@ menter(char *label, char *buf, int bufsz)
 void
 evloop(void)
 {
+	int n;
 	Rune r;
 	Mouse mold;
 
@@ -46,6 +47,15 @@ evloop(void)
 	};
 	for(;;){
 		switch(alt(a)){
+		Redraw:
+			switch(n){
+			case 0: updatedrw(0, 0); break;
+			case 1: updatedrw(0, 1); break;
+			case 2: updatedrw(1, 0); break;
+			case 3: updatedrw(1, 1); break;
+			case 4: resetdrw(); break;
+			}
+			break;
 		case Aresize:
 			if(getwindow(display, Refnone) < 0)
 				sysfatal("resize failed: %r");
@@ -53,13 +63,12 @@ evloop(void)
 			mold = mc->Mouse;
 			break;
 		case Amouse:
-			if(mousefn(mc->Mouse, subpt(mc->Mouse.xy, mold.xy)))
-				updatedrw(0);
+			n = mousefn(mc->Mouse, subpt(mc->Mouse.xy, mold.xy));
 			mold = mc->Mouse;
-			break;
+			goto Redraw;
 		case Akbd:
-			keyfn(r);
-			break;
+			n = keyfn(r);
+			goto Redraw;
 		}
 	}
 }

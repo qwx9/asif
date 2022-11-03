@@ -7,7 +7,6 @@
 #include "dat.h"
 #include "fns.h"
 
-QLock drawlock;
 Node *selected;
 int showgrid;
 int nodesz = 1;
@@ -30,9 +29,9 @@ enum{
 	Cend,
 };
 static Image *col[Cend];
-static Point viewΔ;
+static Point viewΔ, panmax;
 static Rectangle viewr, hudr;
-static Image *view;
+static Image *view, *board;
 
 static Image *
 eallocimage(Rectangle r, int repl, ulong col)
@@ -44,11 +43,24 @@ eallocimage(Rectangle r, int repl, ulong col)
 	return i;
 }
 
-void
+int
 dopan(Point p)
 {
-	pan.x -= p.x;
-	pan.y -= p.y;
+	p.x = pan.x - p.x;
+	p.y = pan.y - p.y;
+	if(p.x < -panmax.x/2)
+		p.x = -panmax.x/2;
+	else if(p.x > panmax.x/2)
+		p.x = panmax.x/2;
+	if(p.y < 0)
+		p.y = 0;
+	else if(p.y > panmax.y)
+		p.y = panmax.y;
+	if(!eqpt(p, pan)){
+		pan = p;
+		return 0;
+	}
+	return -1;
 }
 
 void
@@ -94,6 +106,7 @@ drawhud(void)
 	char s[128], *sp;
 	Node *n;
 	Point p;
+	Sim *sim;
 
 	draw(screen, hudr, col[Cbg], nil, ZP);
 	sp = seprint(s, s+sizeof s, "grid size: %dx%d (x%d)", gridwidth, gridheight, nodesz);
@@ -129,8 +142,18 @@ drawhud(void)
 		p.y += font->height;
 		string(screen, p, col[Cfree], ZP, font, s);
 	}
+	if(sims != nil && curscen < sims->n){
+		sim = (Sim *)sims->p + curscen;
+		seprint(s, s+sizeof s,
+			"ref len=%d Δ=%.2f $=%.2f opened=%d expanded=%d updated=%d closed=%d",
+			sim->steps, sim->dist, sim->cost, sim->opened, sim->expanded,
+			sim->updated, sim->closed);
+		p.y += font->height;
+		string(screen, p, col[Cfree], ZP, font, s);
+	}
 }
 
+/* FIXME: multiple, spurious calls when repathing */
 static void
 drawscenpath(void)
 {
@@ -140,7 +163,7 @@ drawscenpath(void)
 	Node *n;
 	Rectangle r;
 
-	if(sims == nil || curscen >= sims->n)
+	if(sims == nil || curscen >= sims->n || goal == nil || start == nil)
 		return;
 	sp = (Sim *)sims->p + curscen;
 	if(sp->path == nil || sp->path->n == 0)
@@ -152,7 +175,7 @@ drawscenpath(void)
 			return;
 		r.min = n2s(n);
 		r.max = addpt(r.min, Pt(sz, sz));
-		draw(view, r, col[Cref], nil, ZP);
+		draw(board, r, col[Cref], nil, ZP);
 	}
 	dprint(Lognone, "path::drawscenpath: malformed or wrong path\n");
 }
@@ -165,6 +188,7 @@ drawnodes(void)
 	Rectangle r;
 	Image *c;
 
+	draw(board, board->r, col[Cfree], nil, ZP);
 	sz = MAX(nodesz - showgrid, 1);
 	for(n=grid; n<grid+gridwidth*gridheight; n++){
 		if(isblocked(n))
@@ -183,7 +207,7 @@ drawnodes(void)
 			continue;
 		r.min = n2s(n);
 		r.max = addpt(r.min, Pt(sz, sz));
-		draw(view, r, c, nil, ZP);
+		draw(board, r, c, nil, ZP);
 	}
 }
 
@@ -222,25 +246,27 @@ drawgrid(void)
 }
 
 static void
-redraw(int clear)
+redraw(int clear, int turboclear)
 {
 	if(clear)
 		draw(screen, screen->r, col[Cbg], nil, ZP);
-	draw(view, view->r, col[Cfree], nil, ZP);
+	if(turboclear){
+		drawnodes();
+		drawscenpath();
+	}
+	draw(view, view->r, board, nil, ZP);
 	if(showgrid && nodesz > 1)
 		drawgrid();
-	drawnodes();
-	drawscenpath();
 	if(nodesz > 8)
 		drawfrom();
 }
 
 void
-updatedrw(int clear)
+updatedrw(int clear, int turboclear)
 {
-	qlock(&drawlock);
-	redraw(clear);
-	qunlock(&drawlock);
+	lockdisplay(display);
+	redraw(clear, turboclear);
+	unlockdisplay(display);
 	drawhud();
 	flushdrw();
 }
@@ -252,11 +278,16 @@ resetdrw(void)
 	viewΔ = divpt(addpt(subpt(ZP, subpt(screen->r.max, screen->r.min)), viewr.max), 2);
 	if(-viewΔ.y < font->height * 2)
 		viewΔ.y = 0;
+	panmax.x = MAX(nodesz * gridwidth - Dx(screen->r), 0);
+	panmax.y = MAX(nodesz * gridheight - Dy(screen->r), 0);
+	dopan(ZP);
 	hudr.min = addpt(screen->r.min, subpt(Pt(2, viewr.max.y+2), viewΔ));
 	hudr.max = addpt(hudr.min, Pt(screen->r.max.x, font->height*3));
 	freeimage(view);
 	view = eallocimage(viewr, 0, DNofill);
-	updatedrw(1);
+	freeimage(board);
+	board = eallocimage(viewr, 0, DNofill);
+	updatedrw(1, 1);
 }
 
 void
@@ -266,6 +297,8 @@ initdrw(void)
 
 	if(initdraw(nil, nil, "path") < 0)
 		sysfatal("initdraw: %r");
+	display->locking = 1;
+	unlockdisplay(display);
 	col[Cbg] = display->black;
 	col[Cgrid] = eallocimage(Rect(0,0,1,1), 1, 0x222222ff);
 	col[Cblocked] = display->black;

@@ -2,7 +2,7 @@ void	initgraphics(int (*)(Rune), int (*)(Mouse, Point));
 void	init(char*, Vertex, int, int, int);
 Node*	scrselect(Point);
 void	errmsg(char*, ...);
-void	updatedrw(int);
+void	updatedrw(int, int);
 int	menter(char*, char*, int);
 void	evloop(void);
 void	writeresults(void);

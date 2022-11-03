@@ -11,7 +11,7 @@
 #include "dat.h"
 #include "fns.h"
 
-extern void	dopan(Point);
+extern int	dopan(Point);
 extern Point pan;
 
 mainstacksize = 128*1024;
@@ -23,34 +23,38 @@ static int
 grmouse(Mouse m, Point Δ)
 {
 	static Node *old;
+	int r;
 	Node *n;
 
 	if(m.buttons == 0){
 		old = nil;
-		return 0;
-	}else if((m.buttons & 7) == 2){
-		dopan(Δ);
-		updatedrw(1);
-		return 1;
-	}
+		return -1;
+	}else if((m.buttons & 7) == 2)
+		return dopan(Δ) >= 0 ? 0 : -1;
 	if((n = scrselect(m.xy)) == nil || old == n)
 		return 0;
+	r = 0;
 	switch(m.buttons & 7){
 	case 1: break; /* just selecting the node */
 	case 4:
 		switch(mousemode){
-		case Mmodegoal: if(n != start && !isblocked(n)) goal = n; break;
-		case Mmodestart: if(n != goal && !isblocked(n)) start = n; break;
+		case Mmodegoal: if(n != start && !isblocked(n)){ goal = n; r=1; } break;
+		case Mmodestart: if(n != goal && !isblocked(n)){ start = n; r=1; } break;
 		case Mmodeblock:
 			if(n != start && n != goal
-			&& (old == nil || isblocked(n) ^ isblocked(old)))
+			&& (old == nil || isblocked(n) ^ isblocked(old))){
 				toggleblocked(n);
+				r = 1;
+			}
 			break;
 		}
 	}
 	old = n;
-	trypath(start, goal);
-	return 1;
+	if(r){
+		trypath(start, goal);
+		return 1;
+	}
+	return 0;
 }
 
 static int
@@ -77,43 +81,19 @@ grkey(Rune r)
 {
 	switch(r){
 	case Kdel:
-	case 'q':
-		threadexitsall(nil);
-	case 'r':
-		reloadscen();
-		updatedrw(0);
-		break;
+	case 'q': threadexitsall(nil);
+	case 'r': reloadscen(); return 1;
 	case ' ':
-	case '\n':
-		mousemode = (mousemode + 1) % Mmodes;
-		updatedrw(0);
-		break;
-	case 'g':
-		showgrid ^= 1;
-		updatedrw(0);
-		break;
+	case '\n': mousemode = (mousemode + 1) % Mmodes; return 0;
+	case 'g': showgrid ^= 1; return 0;
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
-		if(setscen() >= 0)
-			updatedrw(0);
-		break;
+		return setscen() >= 0 ? 0 : -1;
 	case '+':
-	case '=':
-		if(nodesz < 1<<16){
-			nodesz <<= 1;
-			resetdrw();
-		}
-		break;
-	case '-':
-		if(nodesz > 1){
-			nodesz >>= 1;
-			resetdrw();
-		}
-		break;
-	case 'z':
-		pan = ZP;
-		updatedrw(1);
-		break;
+	/* FIXME: no hud when screen too small */
+	case '=': return nodesz < 1<<16 ? (nodesz <<= 1, 4) : -1;
+	case '-': return nodesz > 1     ? (nodesz >>= 1, 4) : -1;
+	case 'z': pan = ZP; return 2;
 	}
 	return 0;
 }
@@ -217,7 +197,7 @@ threadmain(int argc, char **argv)
 	initgraphics(grkey, grmouse);
 	if(scen != nil){
 		showscen(0);
-		updatedrw(0);
+		updatedrw(0, 1);
 	}
 	evloop();
 	threadexitsall(nil);
