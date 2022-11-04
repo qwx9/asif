@@ -125,9 +125,10 @@ setparm(Vertex *dim, int move, int alg, int dist)
 	case Deuclid: distfn = eucdist; break;
 	case Dmanhattan: distfn = manhdist; break;
 	case Doctile: distfn = octdist; break;
+	case Dchebyshev: distfn = chebdist; break;
 	case -1:
-		distfn = octdist;
-		dprint(Logdebug, "set by default: octile distance\n");
+		distfn = chebdist;
+		dprint(Logdebug, "set by default: chebyshev distance\n");
 		break;
 	default: sysfatal("setparm: unknown distance function %d", dist);
 	}

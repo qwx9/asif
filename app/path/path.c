@@ -148,8 +148,10 @@ threadmain(int argc, char **argv)
 			d = Doctile;
 		else if(strcmp(s, "manhattan") == 0)
 			d = Dmanhattan;
-		else if(strcmp(s, "euclid") == 0)
+		else if(strcmp(s, "euclidean") == 0)
 			d = Deuclid;
+		else if(strcmp(s, "chebyshev") == 0)
+			d = Dchebyshev;
 		else{
 			fprint(2, "unsupported distance function\n");
 			usage();
