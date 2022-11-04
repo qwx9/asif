@@ -88,7 +88,7 @@ grkey(Rune r)
 	case 'g': showgrid ^= 1; return 0;
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
-		return setscen() >= 0 ? 0 : -1;
+		return setscen() >= 0 ? 1 : -1;
 	case '+':
 	/* FIXME: no hud when screen too small */
 	case '=': return nodesz < 1<<16 ? (nodesz <<= 1, 4) : -1;
