@@ -32,6 +32,16 @@ octdist(Node *a, Node *b)
 }
 
 double
+chebdist(Node *a, Node *b)
+{
+	int dx, dy;
+
+	dx = abs(a->x - b->x);
+	dy = abs(a->y - b->y);
+	return 1 * (dx + dy) + MIN(dx, dy) * (1 - 2 * 1);
+}
+
+double
 manhdist(Node *a, Node *b)
 {
 	int dx, dy;
@@ -56,9 +66,11 @@ double
 unitmovecost(Node *a, Node *b)
 {
 	Vertex Δ;
+	double f;
 
 	Δ = ΔV(*b, *a);
-	return Δ.x != 0 && Δ.y != 0 ? 1.001 : 1.0;
+	f = distfn == octdist ? SQRT2 : 1.001;
+	return Δ.x != 0 && Δ.y != 0 ? f : 1.0;
 }
 
 int

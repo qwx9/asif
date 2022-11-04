@@ -25,9 +25,11 @@ enum{
 	Deuclid,
 	Dmanhattan,
 	Doctile,
+	Dchebyshev,
 };
 double	eucdist(Node*, Node*);
 double	octdist(Node*, Node*);
+double	chebdist(Node*, Node*);
 double	manhdist(Node*, Node*);
 extern double	(*distfn)(Node*, Node*);
 
