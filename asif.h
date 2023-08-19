@@ -39,6 +39,24 @@ void	vecpush(Vector*, void*);
 void*	vecget(Vector*, int);
 Vector*	vec(int);
 
+typedef struct Vecarr Vecarr;
+struct Vecarr{
+	void *buf;
+	void *tail;
+	int elsz;
+	usize len;
+	usize bufsz;
+};
+
+void	vecarrnuke(Vecarr*);
+void*	vecarrget(Vecarr*, usize);
+void*	vecarrpoptail(Vecarr*);
+usize	vecarrindexof(Vecarr*, void*);
+void*	vecarrcopy(Vecarr*, void*, usize*);
+void*	vecarrp(Vecarr*, usize);
+void	vecarrresize(Vecarr*, usize);
+Vecarr	vecarr(usize, usize);
+
 typedef struct QNode QNode;
 struct QNode{
 	QNode *left;
